@@ -3,7 +3,7 @@
 1. Create a "build" directory and goes to this directory:
    
    ```shell
-   $ mkdir build & cd build
+   $ mkdir build && cd build
    ```
 
 2. Generate files for building:
