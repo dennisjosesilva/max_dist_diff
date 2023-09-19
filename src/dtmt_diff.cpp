@@ -175,7 +175,7 @@ int main(int argc, char **argv){
   //nSeeds = 0;
   //start_new_seeds = boundary;
   T = Imax;
-  while(!gft::PQueue32::IsEmpty(Q)){
+  while(!gft::PQueue32::IsEmpty(Q)) {
     val = gft::PQueue32::FastGetMaxVal(Q);
 
     if(val == T){
@@ -183,26 +183,25 @@ int main(int argc, char **argv){
       
       bin->data[p] = 1;
       //Boundary detection:
-      if(min_neighbor->data[p] < T){
-	//if(min_neighbor->data[p] == INT_MIN) printf("Seed= x: %d, y: %d\n", p%img->ncols, p/img->ncols);
+      if(min_neighbor->data[p] < T) {
+	    //if(min_neighbor->data[p] == INT_MIN) printf("Seed= x: %d, y: %d\n", p%img->ncols, p/img->ncols);
+        boundary[nboundary] = p;
+        nboundary++;
+        //nSeeds++;
 
-	boundary[nboundary] = p;
-	nboundary++;
-	//nSeeds++;
-
-	root->data[p] = p;
-	pred->data[p] = NIL;
-	cost->data[p] = 0;
-	//gft::PQueue32::InsertElem(&Q_edt, p);
-	gft::PQueue32::FastInsertElem(Q_edt, p);
+        root->data[p] = p;
+        pred->data[p] = NIL;
+        cost->data[p] = 0;
+        //gft::PQueue32::InsertElem(&Q_edt, p);
+        gft::PQueue32::FastInsertElem(Q_edt, p);
       }
-      else{
-	cost->data[p] = INT_MAX;
-	insert_neighbors_pqueue(p, A4, bin, cost, Q_edt);
+      else {
+        cost->data[p] = INT_MAX;
+        insert_neighbors_pqueue(p, A4, bin, cost, Q_edt);
       }
       //printf(" val: %d ", val);
     }
-    else{
+    else {
       //printf("T: %d\n", T);
       EDT_DIFF(Q_edt, A8, bin, root, pred, cost, Bedt); //Dx, Dy);
                //start_new_seeds, nSeeds);
@@ -221,20 +220,20 @@ int main(int argc, char **argv){
 #endif
       nRemoved = 0;
       T = val;
-      for(i = 0; i < nboundary; i++){
-	p = boundary[i];
-	//Remove from boundary:
-	if(min_neighbor->data[p] >= T){
-	  nboundary--;
-	  //Faz troca para mover o pixel removido para o final do vetor:
-	  //printf("Rem: %d\n", boundary[i]);
-	  
-	  tmp = boundary[i];
-	  boundary[i] = boundary[nboundary];
-	  boundary[nboundary] = tmp;
-	  nRemoved++;
-	  i--;
-	}
+      for(i = 0; i < nboundary; i++) {
+        p = boundary[i];
+        //Remove from boundary:
+        if(min_neighbor->data[p] >= T){
+          nboundary--;
+          //Faz troca para mover o pixel removido para o final do vetor:
+          //printf("Rem: %d\n", boundary[i]);
+          
+          tmp = boundary[i];
+          boundary[i] = boundary[nboundary];
+          boundary[nboundary] = tmp;
+          nRemoved++;
+          i--;
+        }
       }
       //printf("nRemoved: %d\n", nRemoved);
       treeRemoval(&boundary[nboundary], nRemoved,
