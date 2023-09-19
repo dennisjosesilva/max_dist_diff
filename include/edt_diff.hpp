@@ -1,4 +1,4 @@
-#include "gft.h"
+
 #include <queue>
 
 
@@ -133,14 +133,14 @@ void EDT_DIFF(gft::sPQueue32 *Q,
 	      gft::sImage32 *bin,
 	      gft::sImage32 *root,
 	      gft::sImage32 *pred,
-	      gft::sImage32 *cost){
-	      //gft::sImage32 *Dx,
-	      //gft::sImage32 *Dy){
+	      gft::sImage32 *cost,
+	      gft::sImage32 *Bedt){
+              //gft::sImage32 *Dx,
+              //gft::sImage32 *Dy){
               //int *Seeds, int nSeeds){
   gft::Pixel u,v,t;
   int i, p, q, r;
   int tmp,dx,dy;
-
   /*
   for(i = 0; i < nSeeds; i++){
     p = Seeds[i];
@@ -165,6 +165,8 @@ void EDT_DIFF(gft::sPQueue32 *Q,
     r = root->data[p];
     t.x = r % cost->ncols;
     t.y = r / cost->ncols;
+
+    Bedt->data[r] = MAX(Bedt->data[r], cost->data[p]);
     
     for (i=1; i < A->n; i++){
       v.x = u.x + A->dx[i];

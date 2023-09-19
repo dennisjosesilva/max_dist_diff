@@ -5,6 +5,7 @@
 
 #include "edt_diff.hpp"
 
+
 gft::sImage32 *ReadAnyImage(char *file){
   gft::sImage32 *img;
   char command[512];
@@ -67,6 +68,14 @@ void write_boundary(int *boundary, int nboundary,
 }
 
 
+int get_boundary_max(int *boundary, int nboundary,
+		     gft::sImage32 *Bedt){
+  int i, Dmax = 0;
+  for(i = 0; i < nboundary; i++)
+    Dmax = MAX(Dmax, Bedt->data[boundary[i]]);
+  return Dmax;
+}
+
 
 void insert_neighbors_pqueue(int p,
 			     gft::sAdjRel *A,
@@ -107,10 +116,11 @@ int main(int argc, char **argv){
   gft::sImage32 *root;
   gft::sImage32 *pred;
   gft::sImage32 *cost;
+  gft::sImage32 *Bedt;
   //gft::sImage32 *Dx;
   //gft::sImage32 *Dy;
   char filename[512];
-  int Imin, Imax, T, p, i, val, tmp, nRemoved;
+  int Imin, Imax, T, p, i, val, tmp, nRemoved, Dmax;
   int *boundary = NULL; //*start_new_seeds;
   int nboundary; //nSeeds;
   //clock_t start, end;
@@ -140,6 +150,7 @@ int main(int argc, char **argv){
 
   min_neighbor = get_min_neighbor(img, A4);
 
+  Bedt = gft::Image32::Create(img);
   cost = gft::Image32::Create(img);
   pred = gft::Image32::Create(img);
   root = gft::Image32::Create(img);
@@ -193,11 +204,15 @@ int main(int argc, char **argv){
     }
     else{
       //printf("T: %d\n", T);
-      EDT_DIFF(Q_edt, A8, bin, root, pred, cost); //Dx, Dy);
-	       //start_new_seeds, nSeeds);
+      EDT_DIFF(Q_edt, A8, bin, root, pred, cost, Bedt); //Dx, Dy);
+               //start_new_seeds, nSeeds);
       //printf("\n=======================\n");
 #ifdef APPDEBUG
+      Dmax = get_boundary_max(boundary, nboundary, Bedt);
+      //printf("edt_max: %d, ",Dmax);
       //printf("edt_max: %d\n",gft::Image32::GetMaxVal(cost));
+      if(Dmax != gft::Image32::GetMaxVal(cost))
+	printf("Falha\n");
       sprintf(filename, (char *)"../out/bin%03d_diff.pgm", T);
       gft::Image32::Write(bin, (char *)filename);
       sprintf(filename, (char *)"../out/edt%03d_diff.pgm", T);
@@ -234,9 +249,9 @@ int main(int argc, char **argv){
   EDT_DIFF(Q_edt, A8, bin, root, pred, cost); //Dx, Dy);
 #ifdef APPDEBUG
   //printf("edt_max: %d\n",gft::Image32::GetMaxVal(cost));
-  sprintf(filename, (char *)"./out/bin%03d_diff.pgm", T);
+  sprintf(filename, (char *)"../out/bin%03d_diff.pgm", T);
   gft::Image32::Write(bin, (char *)filename);
-  sprintf(filename, (char *)"./out/edt%03d_diff.pgm", T);
+  sprintf(filename, (char *)"../out/edt%03d_diff.pgm", T);
   gft::Image32::Write(cost, (char *)filename);
   write_boundary(boundary, nboundary, img, T);
 #endif
