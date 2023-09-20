@@ -214,7 +214,7 @@ void EDT_DIFF(gft::sPQueue32 *Q,
   */
   
   while(!gft::PQueue32::IsEmpty(Q)){
-    //printf("nadded: %d\n", Q->nadded);
+    // printf("nadded: %d\n", Q->nadded);
     //p = gft::PQueue32::RemoveMinFIFO(Q);
     p = gft::PQueue32::FastRemoveMinFIFO(Q);
     //printf("p: %d\n",p);

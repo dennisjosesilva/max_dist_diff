@@ -50,9 +50,9 @@ int main(int argc, char *argv[])
   std::vector<uint32> maxDistAttr = computeMaxDistanceAttribute(domain, f, tree);
 
   tree.tranverse([&maxDistAttr, &domain, &argv](NodePtr node){
-    std::vector<uint8> nodeImg(domain.numberOfPoints(), 255);
+    std::vector<uint8> nodeImg(domain.numberOfPoints(), 0);
     for (uint32 pidx : node->reconstruct()) {
-      nodeImg[pidx] = 0;
+      nodeImg[pidx] = 255;
     }
 
     std::stringstream ss;

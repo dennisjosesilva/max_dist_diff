@@ -9,7 +9,7 @@
       "type": "cppdbg",
       "request": "launch",
       "program": "${workspaceFolder}/build/max_dist_attr_disp",
-      "args": ["${workspaceFolder}/dat/lena.pgm", "${workspaceFolder}/out"],
+      "args": ["${workspaceFolder}/dat/believe.pgm", "${workspaceFolder}/out"],
       "stopAtEntry": false,
       "cwd": "${fileDirname}",
       "environment": [],

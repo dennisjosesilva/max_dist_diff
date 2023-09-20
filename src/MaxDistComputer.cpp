@@ -40,11 +40,10 @@ std::vector<MaxDistComputer::uint32> MaxDistComputer::computeAttribute(
   std::vector<uint32> maxDist(tree.numberOfNodes(), 0); 
   std::array<std::vector<NodePtr>, 256> levelToNodes = extractLevelMap(tree);
   gft::sImage32 *gftImg = createGFTImage();
-  gft::sImage32 *edt = nullptr;
   gft::sImage32 *bin = gft::Image32::Create(gftImg);
   gft::sImage32 *root = gft::Image32::Create(gftImg);
   gft::sImage32 *pred = gft::Image32::Create(gftImg);
-  gft::sImage32 *cost = gft::Image32::Create(gftImg);
+  gft::sImage32 *cost = gft::Image32::Create(gftImg); // cost = edt^2
   gft::sImage32 *Bedt = gft::Image32::Create(gftImg);
   
   // IFT adjacency 
@@ -95,7 +94,7 @@ std::vector<MaxDistComputer::uint32> MaxDistComputer::computeAttribute(
         // incremetally create level-set binary image
         bin->data[pidx] = 1;
 
-        for (uint qidx : adj->neighbours(pidx)) {
+        for (uint32 qidx : adj->neighbours(pidx)) {
           if (qidx == Box::UndefinedIndex || f_[pidx] > f_[qidx]) {
             // qidx is background neighbour, thus count it.
             ncount[pidx]++;
@@ -114,9 +113,10 @@ std::vector<MaxDistComputer::uint32> MaxDistComputer::computeAttribute(
               // store removed pixel
               toRemove.push_back(qidx);
             }            
-          }
-
-          if (ncount[pidx] > 0) {
+          }          
+        } // end loop on pidx neighbours
+        
+        if (ncount[pidx] > 0) {
             // pidx has at least one background pixel
             // add it to the contour
             Ncontour.insert(pidx);
@@ -131,9 +131,7 @@ std::vector<MaxDistComputer::uint32> MaxDistComputer::computeAttribute(
             cost->data[pidx] = INT_MAX;
             insertNeighborsPQueue(pidx, adj, bin, cost, Q_edt);
           }
-        } // end loop on pidx neighbours
       } // end loop on node cnps
-
     } // end of loop on nodes of the levels
 
     // if there exists contour pixels removed, remove it from
@@ -156,6 +154,14 @@ std::vector<MaxDistComputer::uint32> MaxDistComputer::computeAttribute(
     // Run differential EDT
     EDT_DIFF(Q_edt, A8, bin, root, pred, cost, Bedt);
 
+   #ifdef APPDEBUG
+      std::stringstream sscost;
+      sscost << "../out/cost-" << level << ".pgm";
+      const char *filenamecost = sscost.str().c_str();
+      gft::Image32::Write(cost, (char *)filenamecost);
+    #endif
+
+
     // compute the max dist attribute for each node
     for (NodePtr node : nodes) {
       const std::unordered_set<uint32> &NContour = contours[node->id()];
@@ -168,7 +174,9 @@ std::vector<MaxDistComputer::uint32> MaxDistComputer::computeAttribute(
       }
       
       maxDist[node->id()] = maxDistValue;
+      std::cout << sqrt(maxDist[node->id()]) << " ";
     }
+    std::cout << "\n";
   }
 
   // Clean up memory
@@ -221,7 +229,9 @@ void MaxDistComputer::insertNeighborsPQueue(
 {
   for (uint32 qidx : adj->neighbours(pidx)) {
     if (qidx != Box::UndefinedIndex) { // qidx is in the domain
-      if (bin->data[qidx] > 0 && cost->data[qidx] != INT_MAX && Q->L.elem[qidx].color != GRAY) {
+      if (bin->data[qidx] > 0 
+        && cost->data[qidx] != INT_MAX 
+        && Q->L.elem[qidx].color != GRAY) {
         Q->L.elem[qidx].color = WHITE;
         gft::PQueue32::FastInsertElem(Q, qidx);
       }
