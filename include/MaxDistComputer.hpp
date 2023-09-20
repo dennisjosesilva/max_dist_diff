@@ -29,3 +29,9 @@ private:
   Box domain_;
   const std::vector<uint8> &f_;
 };
+
+
+std::vector<morphotree::uint32> computeMaxDistanceAttribute(
+  const morphotree::Box &domain,
+  const std::vector<morphotree::uint8> &f, 
+  const MaxDistComputer::MTree &tree);

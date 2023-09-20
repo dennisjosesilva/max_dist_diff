@@ -6,6 +6,19 @@
 
 #include <edt_diff.hpp>
 
+#include <iostream>
+
+// Useful function
+std::vector<morphotree::uint32> computeMaxDistanceAttribute(
+  const morphotree::Box &domain,
+  const std::vector<morphotree::uint8> &f, 
+  const MaxDistComputer::MTree &tree)
+{
+  MaxDistComputer comp{domain, f};
+  return comp.computeAttribute(tree);
+}
+
+
 MaxDistComputer::MaxDistComputer(Box domain,
   const std::vector<uint8> &f)
   : domain_{domain}, f_{f}
@@ -47,6 +60,9 @@ std::vector<MaxDistComputer::uint32> MaxDistComputer::computeAttribute(
   
   // process the level sets from 255 down to 0
   for (int level=255; level >= 0; level--) {
+
+    std::cout << "level: " << level << std::endl;
+
     // skip level that does not contain nodes
     const std::vector<NodePtr> nodes = levelToNodes[level];
     if (nodes.empty())
