@@ -1,5 +1,10 @@
 #include "MaxDistComputer.hpp"
+#include <unordered_set>
 
+#include <morphotree/adjacency/adjacency.hpp>
+#include <morphotree/adjacency/adjacency4c.hpp>
+
+#include <edt_diff.hpp>
 
 MaxDistComputer::MaxDistComputer(Box domain,
   const std::vector<uint8> &f)
@@ -10,9 +15,11 @@ std::vector<MaxDistComputer::uint32> MaxDistComputer::computeAttribute(
   const MTree &tree) const
 {
   using NodePtr = MTree::NodePtr;
+  using morphotree::Adjacency;
+  using morphotree::InfAdjacency4C;
 
   // define useful images 
-  std::vector<uint32> maxDist; 
+  std::vector<uint32> maxDist(tree.numberOfNodes(), 0); 
   std::array<std::vector<NodePtr>, 256> levelToNodes = extractLevelMap(tree);
   gft::sImage32 *gftImg = createGFTImage();
   gft::sImage32 *edt = nullptr;
@@ -22,56 +29,126 @@ std::vector<MaxDistComputer::uint32> MaxDistComputer::computeAttribute(
   gft::sImage32 *cost = gft::Image32::Create(gftImg);
   gft::sImage32 *Bedt = gft::Image32::Create(gftImg);
   gft::sPQueue32 *Q = nullptr, *Q_edt = nullptr;
+  
+  // IFT adjacency 
+  gft::sAdjRel* A8 = gft::AdjRel::Neighborhood_8();  
 
   initPredAndRoot(pred, root);
   
   // define priority queues
   int nb = SQUARE(MIN(gftImg->ncols, gftImg->nrows) / 2.0 + 1);
-  gft::sPQueue32 *Q     = gft::PQueue32::Create(nb, gftImg->n, cost->data);
   gft::sPQueue32 *Q_edt = gft::PQueue32::Create(nb, gftImg->n, cost->data);
 
 
-//////////////////////////////////////////////////////////
-  int *boundary = (int *)malloc((gftImg->n+1)*sizeof(int));
-  int nboundary = 0;
+  // define variables from incremental contour
+  std::vector<std::unordered_set<uint32>> contours(tree.numberOfNodes());
+  std::vector<uint8> ncount(domain_.numberOfPoints());
+  
+  // Contour adjacency
+  std::unique_ptr<Adjacency> adj = std::make_unique<InfAdjacency4C>(domain_);
+  
+  // process the level sets from 255 down to 0
+  for (int level=255; level >= 0; level--) {
+    // skip level that does not contain nodes
+    const std::vector<NodePtr> nodes = levelToNodes[level];
+    if (nodes.empty())
+      continue;
 
-  int Imin = gft::Image32::GetMinVal(gftImg);
-  int Imax = gft::Image32::GetMaxVal(gftImg);
-  int T = Imax;
-  gft::sAdjRel *A4 = gft::AdjRel::Neighborhood_4();
-  gft::sImage32 *min_neighbor= get_min_neighbor(gftImg, A4); //importar essa funcao get_min_neighbor
-  //Enquanto: Imax < Imin  ..precisa incluir
-  for (NodePtr node: levelToNodes[Imax]){
-    for(int p: node->reconstruct()){
-      bin->data[p] = 1;
+    // removed contour pixels of level "level"
+    std::vector<uint32> toRemove;
 
-      if(min_neighbor->data[p] < T) {
-        boundary[nboundary] = p;
-        nboundary++;
-        
-        root->data[p] = p;
-        pred->data[p] = NIL;
-        cost->data[p] = 0;
-        
-        gft::PQueue32::FastInsertElem(Q_edt, p);
-
-      }else {
-        cost->data[p] = INT_MAX;
-        insert_neighbors_pqueue(p, A4, bin, cost, Q_edt);
+    // There exist at least one node in "level"
+    // So, we have to process them.
+    for (NodePtr node : nodes) {
+      // process node 
+      
+      // define Ncontour which will be processed
+      std::unordered_set<uint32> &Ncontour = contours[node->id()];
+      
+      // reuse children contour pixels
+      for (NodePtr c : node->children()) {
+        for (uint32 pidx : contours[c->id()])
+          Ncontour.insert(pidx);
       }
+
+      // compute new contour points and remove contours 
+      // points analysing node CNPs
+      for (uint32 pidx : node->cnps()) {
+        // incremetally create level-set binary image
+        bin->data[pidx] = 1;
+
+        for (uint qidx : adj->neighbours(pidx)) {
+          if (qidx == Box::UndefinedIndex || f_[pidx] > f_[qidx]) {
+            // qidx is background neighbour, thus count it.
+            ncount[pidx]++;
+          }
+          else if (f_[pidx] < f_[qidx]) {
+            // pidx was a background pixel of qidx, but it is not anymore
+            // "remove" pidx from the qidx count.
+            ncount[qidx]--;
+
+            
+            if (ncount[qidx] == 0) {
+              // qidx does not have a background neighbour anymore. Remove
+              // it from the contour.
+              Ncontour.erase(qidx);
+
+              // store removed pixel
+              toRemove.push_back(qidx);
+            }            
+          }
+
+          if (ncount[pidx] > 0) {
+            // pidx has at least one background pixel
+            // add it to the contour
+            Ncontour.insert(pidx);
+
+            // setting up for the diffential ift.
+            root->data[pidx] = pidx;
+            pred->data[pidx] = NIL;
+            cost->data[pidx] = 0;
+            gft::PQueue32::FastInsertElem(Q_edt, p);
+          }
+          else {  // pidx is pixel of level "level" and it is not a contour pixel
+            cost->data[pidx] = INT_MAX;
+          }
+        } // end loop on pidx neighbours
+      } // end loop on node cnps
+
+    } // end of loop on nodes of the levels
+
+    // if there exists contour pixels removed, remove it from
+    // ift setting up
+    // TODO: Adapt "treeRemoval Function"
+    // if (!toRemove.empty())
+    //         treeRemoval(&boundary[nboundary], nRemoved,
+    //     bin, Q_edt, root, pred, cost, A8);
+
+    // The roots, costs and borders are set. 
+    // Compute maximum distance attributes for 
+    // the nodes in "level"
+    
+    // Run differential EDT
+    EDT_DIFF(Q_edt, A8, bin, root, pred, cost, Bedt);
+
+    // compute the max dist attribute for each node
+    for (NodePtr node : nodes) {
+      const std::unordered_set<uint32> &NContour = contours[node->id()];
+      uint32 maxDistValue = 0;
+
+      // search for maximum distance of N on its contour
+      for (uint32 pidx : NContour) {
+        if (Bedt->data[pidx] > maxDistValue)
+          maxDistValue = Bedt->data[pidx];
+      }
+      
+      maxDist[node->id()] = maxDistValue;
     }
   }
-  runEDT_DIFF(img, bin, root, pred, cost, Bedt, boundary, nboundary, Q_edt)
 
-////////////////////////////////////////
+  // Clean up memory (TODO)
 
-  for (uint32 pidx = 0; pidx < gftImg->n; pidx++) {
-    gft::PQueue32::FastInsertElem(Q, pidx);
-  }
-
-
-
-
+  return maxDist;
 }
 
 std::array<std::vector<MaxDistComputer::NodePtr>, 256>
