@@ -8,7 +8,7 @@
 
 #include <iostream>
 
-#define APPDEBUG
+//#define APPDEBUG
 
 #ifdef APPDEBUG
   #include <sstream>
@@ -88,6 +88,24 @@ std::vector<MaxDistComputer::uint32> MaxDistComputer::computeAttribute(
           Ncontour.insert(pidx);
       }
 
+      for (uint32 pidx : node->cnps()) {
+         for (uint32 qidx : adj->neighbours(pidx)) {
+           if (qidx != Box::UndefinedIndex && f_[pidx] < f_[qidx]) {
+              if (ncount[qidx] == 0) {
+                // qidx does not have a background neighbour anymore. Remove
+                // it from the contour.
+                Ncontour.erase(qidx);
+
+                // store removed pixel
+                toRemove.push_back(qidx);
+            }
+          }
+        }
+      }
+
+      if (!toRemove.empty())
+        treeRemoval(toRemove, bin, Q_edt, root, pred, cost, A8);
+
       // compute new contour points and remove contours 
       // points analysing node CNPs
       for (uint32 pidx : node->cnps()) {
@@ -99,21 +117,21 @@ std::vector<MaxDistComputer::uint32> MaxDistComputer::computeAttribute(
             // qidx is background neighbour, thus count it.
             ncount[pidx]++;
           }
-          else if (f_[pidx] < f_[qidx]) {
-            // pidx was a background pixel of qidx, but it is not anymore
-            // "remove" pidx from the qidx count.
-            ncount[qidx]--;
+          // else if (f_[pidx] < f_[qidx]) {
+          //   // pidx was a background pixel of qidx, but it is not anymore
+          //   // "remove" pidx from the qidx count.
+          //   ncount[qidx]--;
 
             
-            if (ncount[qidx] == 0) {
-              // qidx does not have a background neighbour anymore. Remove
-              // it from the contour.
-              Ncontour.erase(qidx);
+          //   if (ncount[qidx] == 0) {
+          //     // qidx does not have a background neighbour anymore. Remove
+          //     // it from the contour.
+          //     Ncontour.erase(qidx);
 
-              // store removed pixel
-              toRemove.push_back(qidx);
-            }            
-          }          
+          //     // store removed pixel
+          //     toRemove.push_back(qidx);
+          //   }            
+          // }          
         } // end loop on pidx neighbours
         
         if (ncount[pidx] > 0) {
@@ -137,8 +155,7 @@ std::vector<MaxDistComputer::uint32> MaxDistComputer::computeAttribute(
     // if there exists contour pixels removed, remove it from
     // ift setting up
     // TODO: Adapt "treeRemoval Function"
-    if (!toRemove.empty())
-      treeRemoval(toRemove, bin, Q_edt, root, pred, cost, A8);
+    
 
     // The roots, costs and borders are set. 
     // Compute maximum distance attributes for 

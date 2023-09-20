@@ -109,8 +109,7 @@ void treeRemoval(const std::vector<morphotree::uint32> &toRemove,
 	}
 	else if(bin->data[q] > 0 &&
 		cost->data[root->data[q]] != INT_MAX){
-	  if(cost->data[q] != INT_MAX &&
-	     Q->L.elem[q].color != GRAY){
+	  if(Q->L.elem[q].color != GRAY){
 	    Q->L.elem[q].color = WHITE;
 
 	    //gft::PQueue32::InsertElem(&Q, q);
