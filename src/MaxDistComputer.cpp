@@ -149,7 +149,8 @@ std::vector<MaxDistComputer::uint32> MaxDistComputer::computeAttribute(
     #ifdef APPDEBUG
       std::stringstream ss;
       ss << "../out/" << level << ".pgm";
-      gft::Image32::Write(bin, "../out/debug.pgm");
+      const char *filename = ss.str().c_str();
+      gft::Image32::Write(bin, (char *)filename);
     #endif
 
     // Run differential EDT
