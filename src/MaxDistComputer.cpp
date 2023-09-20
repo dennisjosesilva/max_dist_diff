@@ -28,7 +28,6 @@ std::vector<MaxDistComputer::uint32> MaxDistComputer::computeAttribute(
   gft::sImage32 *pred = gft::Image32::Create(gftImg);
   gft::sImage32 *cost = gft::Image32::Create(gftImg);
   gft::sImage32 *Bedt = gft::Image32::Create(gftImg);
-  gft::sPQueue32 *Q = nullptr, *Q_edt = nullptr;
   
   // IFT adjacency 
   gft::sAdjRel* A8 = gft::AdjRel::Neighborhood_8();  
@@ -38,7 +37,6 @@ std::vector<MaxDistComputer::uint32> MaxDistComputer::computeAttribute(
   // define priority queues
   int nb = SQUARE(MIN(gftImg->ncols, gftImg->nrows) / 2.0 + 1);
   gft::sPQueue32 *Q_edt = gft::PQueue32::Create(nb, gftImg->n, cost->data);
-
 
   // define variables from incremental contour
   std::vector<std::unordered_set<uint32>> contours(tree.numberOfNodes());
@@ -107,7 +105,7 @@ std::vector<MaxDistComputer::uint32> MaxDistComputer::computeAttribute(
             root->data[pidx] = pidx;
             pred->data[pidx] = NIL;
             cost->data[pidx] = 0;
-            gft::PQueue32::FastInsertElem(Q_edt, p);
+            gft::PQueue32::FastInsertElem(Q_edt, pidx);
           }
           else {  // pidx is pixel of level "level" and it is not a contour pixel
             cost->data[pidx] = INT_MAX;
@@ -120,9 +118,8 @@ std::vector<MaxDistComputer::uint32> MaxDistComputer::computeAttribute(
     // if there exists contour pixels removed, remove it from
     // ift setting up
     // TODO: Adapt "treeRemoval Function"
-    // if (!toRemove.empty())
-    //         treeRemoval(&boundary[nboundary], nRemoved,
-    //     bin, Q_edt, root, pred, cost, A8);
+    if (!toRemove.empty())
+      treeRemoval(toRemove, bin, Q_edt, root, pred, cost, A8);
 
     // The roots, costs and borders are set. 
     // Compute maximum distance attributes for 
@@ -146,7 +143,14 @@ std::vector<MaxDistComputer::uint32> MaxDistComputer::computeAttribute(
     }
   }
 
-  // Clean up memory (TODO)
+  // Clean up memory
+  gft::Image32::Destroy(&cost);
+  gft::Image32::Destroy(&pred);
+  gft::Image32::Destroy(&root);
+  gft::PQueue32::Destroy(&Q_edt);
+  gft::Image32::Destroy(&gftImg);
+  gft::Image32::Destroy(&bin);
+  gft::AdjRel::Destroy(&A8);
 
   return maxDist;
 }

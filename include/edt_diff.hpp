@@ -1,6 +1,6 @@
 
 #include <queue>
-
+#include <morphotree/core/alias.hpp>
 
 void treeRemoval(int *R, int nR,
 		 gft::sImage32 *bin,
@@ -63,7 +63,66 @@ void treeRemoval(int *R, int nR,
   }
 }
 
+void treeRemoval(const std::vector<morphotree::uint32> &toRemove,
+		 gft::sImage32 *bin,
+		 gft::sPQueue32 *Q,
+		 gft::sImage32 *root,
+		 gft::sImage32 *pred,
+		 gft::sImage32 *cost,
+		 gft::sAdjRel *A){
+  std::queue<int> path;
+  gft::Pixel u,v;
+  int i, p, q;
 
+  for(morphotree::uint32 pidx : toRemove){
+    p = static_cast<int>(pidx);
+
+    //printf("R[%d] = %d\n", i, p);
+
+    cost->data[p] = INT_MAX;
+    pred->data[p] = NIL;
+    root->data[p] = p;
+    Q->L.elem[p].color = WHITE;
+    path.push(p);
+  }
+  while(!path.empty()){
+    p = path.front();
+    path.pop();
+
+    u.x = p % cost->ncols;
+    u.y = p / cost->ncols;
+
+    for (i=1; i < A->n; i++){
+      v.x = u.x + A->dx[i];
+      v.y = u.y + A->dy[i];
+      
+      if(v.x >= 0 && v.x < cost->ncols &&
+	 v.y >= 0 && v.y < cost->nrows){
+	q = v.x + v.y * cost->ncols;
+
+	if(p == pred->data[q]){
+	  cost->data[q] = INT_MAX;
+	  pred->data[q] = NIL;
+	  root->data[q] = q;
+	  Q->L.elem[q].color = WHITE;
+	  path.push(q);
+	}
+	else if(bin->data[q] > 0 &&
+		cost->data[root->data[q]] != INT_MAX){
+	  if(cost->data[q] != INT_MAX &&
+	     Q->L.elem[q].color != GRAY){
+	    Q->L.elem[q].color = WHITE;
+
+	    //gft::PQueue32::InsertElem(&Q, q);
+	    gft::PQueue32::FastInsertElem(Q, q);
+	    
+	    //printf("Frontier: %d\n", q);
+	  }
+	}
+      }
+    }
+  }
+}
 
 void removeSubTree(int q_in,
 		   gft::sImage32 *bin,

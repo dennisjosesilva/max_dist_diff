@@ -24,18 +24,29 @@ target_link_libraries(dtmt
   OpenMP::OpenMP_CXX)
 
 
-add_executable(dtmt_diff src/dtmt_diff.cpp)
-target_link_libraries(dtmt_diff
-    gft 
-    Threads::Threads
-    ZLIB::ZLIB
-    OpenMP::OpenMP_CXX)
+# add_executable(dtmt_diff src/dtmt_diff.cpp)
+# target_link_libraries(dtmt_diff
+#     gft 
+#     Threads::Threads
+#     ZLIB::ZLIB
+#     OpenMP::OpenMP_CXX)
 
 # Exemplos com a morphotree
 add_executable(max_dist_attr src/max_dist_attr.cpp)
 target_link_libraries(max_dist_attr
   morphotree
   gft 
+  Threads::Threads
+  ZLIB::ZLIB
+  OpenMP::OpenMP_CXX)
+
+# display maximum distance attribute.
+add_executable(max_dist_attr_disp 
+  src/MaxDistComputer.cpp
+  src/max_dist_attr_disp.cpp)
+target_link_libraries(max_dist_attr_disp
+  morphotree
+  gft
   Threads::Threads
   ZLIB::ZLIB
   OpenMP::OpenMP_CXX)
