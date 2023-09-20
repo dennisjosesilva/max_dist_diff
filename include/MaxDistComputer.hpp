@@ -15,6 +15,7 @@ public:
   using MTree = morphotree::MorphologicalTree<uint8>;
   using NodePtr = MTree::NodePtr;
   using Box = morphotree::Box;
+  using Adjacency = morphotree::Adjacency;
 
   MaxDistComputer(Box domain, const std::vector<uint8> &f);
 
@@ -24,6 +25,13 @@ private:
   std::array<std::vector<NodePtr>, 256> extractLevelMap(const MTree &tree) const;
   gft::sImage32 *createGFTImage() const;
   void initPredAndRoot(gft::sImage32 *pred, gft::sImage32 *root) const;
+
+  void insertNeighborsPQueue(
+    uint32 pidx, 
+    std::shared_ptr<Adjacency> adj,
+    gft::sImage32 *bin,
+    gft::sImage32 *cost,
+    gft::sPQueue32 *Q) const;
 
 private:
   Box domain_;

@@ -8,6 +8,12 @@
 
 #include <iostream>
 
+#define APPDEBUG
+
+#ifdef APPDEBUG
+  #include <sstream>
+#endif
+
 // Useful function
 std::vector<morphotree::uint32> computeMaxDistanceAttribute(
   const morphotree::Box &domain,
@@ -28,7 +34,6 @@ std::vector<MaxDistComputer::uint32> MaxDistComputer::computeAttribute(
   const MTree &tree) const
 {
   using NodePtr = MTree::NodePtr;
-  using morphotree::Adjacency;
   using morphotree::InfAdjacency4C;
 
   // define useful images 
@@ -56,17 +61,16 @@ std::vector<MaxDistComputer::uint32> MaxDistComputer::computeAttribute(
   std::vector<uint8> ncount(domain_.numberOfPoints());
   
   // Contour adjacency
-  std::unique_ptr<Adjacency> adj = std::make_unique<InfAdjacency4C>(domain_);
+  std::shared_ptr<Adjacency> adj = std::make_shared<InfAdjacency4C>(domain_);
   
   // process the level sets from 255 down to 0
-  for (int level=255; level >= 0; level--) {
-
-    std::cout << "level: " << level << std::endl;
-
+  for (int level=255; level >= 0; level--) {    
     // skip level that does not contain nodes
     const std::vector<NodePtr> nodes = levelToNodes[level];
     if (nodes.empty())
       continue;
+
+    std::cout << "level: " << level << std::endl;
 
     // removed contour pixels of level "level"
     std::vector<uint32> toRemove;
@@ -121,10 +125,11 @@ std::vector<MaxDistComputer::uint32> MaxDistComputer::computeAttribute(
             root->data[pidx] = pidx;
             pred->data[pidx] = NIL;
             cost->data[pidx] = 0;
-            gft::PQueue32::FastInsertElem(Q_edt, pidx);
+            gft::PQueue32::FastInsertElem(Q_edt, static_cast<int>(pidx));
           }
           else {  // pidx is pixel of level "level" and it is not a contour pixel
             cost->data[pidx] = INT_MAX;
+            insertNeighborsPQueue(pidx, adj, bin, cost, Q_edt);
           }
         } // end loop on pidx neighbours
       } // end loop on node cnps
@@ -141,6 +146,12 @@ std::vector<MaxDistComputer::uint32> MaxDistComputer::computeAttribute(
     // Compute maximum distance attributes for 
     // the nodes in "level"
     
+    #ifdef APPDEBUG
+      std::stringstream ss;
+      ss << "../out/" << level << ".pgm";
+      gft::Image32::Write(bin, "../out/debug.pgm");
+    #endif
+
     // Run differential EDT
     EDT_DIFF(Q_edt, A8, bin, root, pred, cost, Bedt);
 
@@ -198,4 +209,21 @@ void MaxDistComputer::initPredAndRoot(gft::sImage32 *pred, gft::sImage32 *root) 
     pred->data[pidx] = NIL;
     root->data[pidx] = pidx;
   }  
+}
+
+void MaxDistComputer::insertNeighborsPQueue(
+    uint32 pidx, 
+    std::shared_ptr<Adjacency> adj,
+    gft::sImage32 *bin,
+    gft::sImage32 *cost, 
+    gft::sPQueue32 *Q) const
+{
+  for (uint32 qidx : adj->neighbours(pidx)) {
+    if (qidx != Box::UndefinedIndex) { // qidx is in the domain
+      if (bin->data[qidx] > 0 && cost->data[qidx] != INT_MAX && Q->L.elem[qidx].color != GRAY) {
+        Q->L.elem[qidx].color = WHITE;
+        gft::PQueue32::FastInsertElem(Q, qidx);
+      }
+    }
+  }
 }
