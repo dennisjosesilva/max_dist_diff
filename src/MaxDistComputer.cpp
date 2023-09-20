@@ -30,6 +30,41 @@ std::vector<MaxDistComputer::uint32> MaxDistComputer::computeAttribute(
   gft::sPQueue32 *Q     = gft::PQueue32::Create(nb, gftImg->n, cost->data);
   gft::sPQueue32 *Q_edt = gft::PQueue32::Create(nb, gftImg->n, cost->data);
 
+
+//////////////////////////////////////////////////////////
+  int *boundary = (int *)malloc((gftImg->n+1)*sizeof(int));
+  int nboundary = 0;
+
+  int Imin = gft::Image32::GetMinVal(gftImg);
+  int Imax = gft::Image32::GetMaxVal(gftImg);
+  int T = Imax;
+  gft::sAdjRel *A4 = gft::AdjRel::Neighborhood_4();
+  gft::sImage32 *min_neighbor= get_min_neighbor(gftImg, A4); //importar essa funcao get_min_neighbor
+  //Enquanto: Imax < Imin  ..precisa incluir
+  for (NodePtr node: levelToNodes[Imax]){
+    for(int p: node->reconstruct()){
+      bin->data[p] = 1;
+
+      if(min_neighbor->data[p] < T) {
+        boundary[nboundary] = p;
+        nboundary++;
+        
+        root->data[p] = p;
+        pred->data[p] = NIL;
+        cost->data[p] = 0;
+        
+        gft::PQueue32::FastInsertElem(Q_edt, p);
+
+      }else {
+        cost->data[p] = INT_MAX;
+        insert_neighbors_pqueue(p, A4, bin, cost, Q_edt);
+      }
+    }
+  }
+  runEDT_DIFF(img, bin, root, pred, cost, Bedt, boundary, nboundary, Q_edt)
+
+////////////////////////////////////////
+
   for (uint32 pidx = 0; pidx < gftImg->n; pidx++) {
     gft::PQueue32::FastInsertElem(Q, pidx);
   }
