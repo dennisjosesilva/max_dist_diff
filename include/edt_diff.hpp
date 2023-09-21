@@ -74,50 +74,57 @@ void treeRemoval(const std::vector<morphotree::uint32> &toRemove,
   gft::Pixel u,v;
   int i, p, q;
 
-  for(morphotree::uint32 pidx : toRemove){
+  for(morphotree::uint32 pidx : toRemove){ // set variables based on "toRemove" list
     p = static_cast<int>(pidx);
 
     //printf("R[%d] = %d\n", i, p);
+
+    
 
     cost->data[p] = INT_MAX;
     pred->data[p] = NIL;
     root->data[p] = p;
     Q->L.elem[p].color = WHITE;
+    
+    // adding which pidx to path.
     path.push(p);
   }
-  while(!path.empty()){
+  while(!path.empty()){  // while path is not empty
+    // take the first item from path and remove it
     p = path.front();
     path.pop();
 
+    // compute the coordinates of p
     u.x = p % cost->ncols;
     u.y = p / cost->ncols;
 
+    // take the neighbors of p
     for (i=1; i < A->n; i++){
       v.x = u.x + A->dx[i];
       v.y = u.y + A->dy[i];
       
-      if(v.x >= 0 && v.x < cost->ncols &&
-	 v.y >= 0 && v.y < cost->nrows){
-	q = v.x + v.y * cost->ncols;
+      // v is the neighbor of p in coordinates
+      if(v.x >= 0 && v.x < cost->ncols && v.y >= 0 && v.y < cost->nrows){
+        // if v is within the image domain        
+	      q = v.x + v.y * cost->ncols;
 
-	if(p == pred->data[q]){
-	  cost->data[q] = INT_MAX;
-	  pred->data[q] = NIL;
-	  root->data[q] = q;
-	  Q->L.elem[q].color = WHITE;
-	  path.push(q);
-	}
-	else if(bin->data[q] > 0 &&
-		cost->data[root->data[q]] != INT_MAX){
-	  if(Q->L.elem[q].color != GRAY){
-	    Q->L.elem[q].color = WHITE;
+        if(p == pred->data[q]){
+          cost->data[q] = INT_MAX;
+          pred->data[q] = NIL;
+          root->data[q] = q;
+          Q->L.elem[q].color = WHITE;
+          path.push(q);
+        }
+        else if(bin->data[q] > 0 && cost->data[root->data[q]] != INT_MAX) {
+          if(Q->L.elem[q].color != GRAY) {
+            Q->L.elem[q].color = WHITE;
 
-	    //gft::PQueue32::InsertElem(&Q, q);
-	    gft::PQueue32::FastInsertElem(Q, q);
-	    
-	    //printf("Frontier: %d\n", q);
-	  }
-	}
+            //gft::PQueue32::InsertElem(&Q, q);
+            gft::PQueue32::FastInsertElem(Q, q);
+            
+            //printf("Frontier: %d\n", q);
+          }
+        }
       }
     }
   }

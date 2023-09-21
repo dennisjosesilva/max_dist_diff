@@ -69,36 +69,35 @@ std::vector<MaxDistComputer::uint32> MaxDistComputer::computeAttribute(
     if (nodes.empty())
       continue;
 
-    std::cout << "level: " << level << std::endl;
-
-    // removed contour pixels of level "level"
-    std::vector<uint32> toRemove;
-
     // There exist at least one node in "level"
     // So, we have to process them.
     for (NodePtr node : nodes) {
       // process node 
-      
+
+      // removed contour pixels of the node
+      std::vector<uint32> toRemove;
+
       // define Ncontour which will be processed
       std::unordered_set<uint32> &Ncontour = contours[node->id()];
       
       // reuse children contour pixels
       for (NodePtr c : node->children()) {
-        for (uint32 pidx : contours[c->id()])
-          Ncontour.insert(pidx);
-      }
-
-      for (uint32 pidx : node->cnps()) {
-         for (uint32 qidx : adj->neighbours(pidx)) {
-           if (qidx != Box::UndefinedIndex && f_[pidx] < f_[qidx]) {
-              if (ncount[qidx] == 0) {
-                // qidx does not have a background neighbour anymore. Remove
-                // it from the contour.
-                Ncontour.erase(qidx);
-
-                // store removed pixel
-                toRemove.push_back(qidx);
+        for (uint32 pidx : contours[c->id()]) {
+          for (uint32 qidx : adj->neighbours(pidx)) {
+            // qidx is neighbour of pidx which is a contour pixel a child of node
+            // thus if f(qidx) == level(node), then qidx must be a cnp of node.
+            if (qidx != Box::UndefinedIndex && node->level() == f_[qidx]) {      
+              ncount[pidx]--;
             }
+          }
+
+          if (ncount[pidx] == 0) { // pidx does not have a background neighbor
+            // contour pixel pidx should be removed
+            toRemove.push_back(pidx);
+          }
+          else { // pidx is still having at least one background neighbor
+            // contour pixel pidx is kept in node 
+            Ncontour.insert(pidx);
           }
         }
       }
@@ -117,21 +116,6 @@ std::vector<MaxDistComputer::uint32> MaxDistComputer::computeAttribute(
             // qidx is background neighbour, thus count it.
             ncount[pidx]++;
           }
-          // else if (f_[pidx] < f_[qidx]) {
-          //   // pidx was a background pixel of qidx, but it is not anymore
-          //   // "remove" pidx from the qidx count.
-          //   ncount[qidx]--;
-
-            
-          //   if (ncount[qidx] == 0) {
-          //     // qidx does not have a background neighbour anymore. Remove
-          //     // it from the contour.
-          //     Ncontour.erase(qidx);
-
-          //     // store removed pixel
-          //     toRemove.push_back(qidx);
-          //   }            
-          // }          
         } // end loop on pidx neighbours
         
         if (ncount[pidx] > 0) {
@@ -151,11 +135,6 @@ std::vector<MaxDistComputer::uint32> MaxDistComputer::computeAttribute(
           }
       } // end loop on node cnps
     } // end of loop on nodes of the levels
-
-    // if there exists contour pixels removed, remove it from
-    // ift setting up
-    // TODO: Adapt "treeRemoval Function"
-    
 
     // The roots, costs and borders are set. 
     // Compute maximum distance attributes for 
@@ -191,9 +170,7 @@ std::vector<MaxDistComputer::uint32> MaxDistComputer::computeAttribute(
       }
       
       maxDist[node->id()] = maxDistValue;
-      std::cout << sqrt(maxDist[node->id()]) << " ";
     }
-    std::cout << "\n";
   }
 
   // Clean up memory

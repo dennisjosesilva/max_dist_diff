@@ -62,7 +62,7 @@ int main(int argc, char *argv[])
     stbi_write_png(ss.str().c_str(), domain.width(), domain.height(), 1, nodeImg.data(), 0);
   });
 
-  std::cout << "DONE";
+  std::cout << "DONE\n";
 
   return 0;
 }
