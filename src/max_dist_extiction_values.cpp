@@ -10,12 +10,13 @@
 
 #include <iostream>
 
+#include <MaxDistComputer.hpp>
+
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb_image_write.h>
-
 
 #define APPDEBUG
 
@@ -42,7 +43,7 @@ int main(int argc, char *argv[])
   // check number of arguments from the command call
   if (argc < 3) {
     std::cerr << "usage error!\n";
-    std::cerr << "usage: max_dist_attr <image> <out_img>\n";
+    std::cerr << "usage: max_dist_extiction_values <image> <out_img>\n";
     return -1;
   }
 
@@ -69,18 +70,18 @@ int main(int argc, char *argv[])
   });
 
   // Exctiction value
-  std::vector<uint32> area = AreaComputer<uint8>().computeAttribute(maxtree);
+  std::vector<uint32> maxDist = computeMaxDistanceAttribute(domain, f, maxtree);
   
   #ifdef APPDEBUG
     //print exctition value 
-    ExtinctionValueMapType extVals = ExtinctionValueComputer().compute(maxtree, area);
+    ExtinctionValueMapType extVals = ExtinctionValueComputer().compute(maxtree, maxDist);
     for (auto& leafVal : extVals) {
-      std::cout << "area[" << leafVal.first << "] = " << leafVal.second << "\n";
+      std::cout << "maxDist[" << leafVal.first << "] = " << leafVal.second << "\n";
     }
   #endif
 
   // perform extinction filter
-  iextinctionFilter(maxtree, area, 15);
+  iextinctionFilter(maxtree, maxDist, 15);
 
   std::cout << "FILTER\n";
   std::cout << "Number of nodes: " << maxtree.numberOfNodes() << std::endl;

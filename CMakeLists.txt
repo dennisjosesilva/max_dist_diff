@@ -32,8 +32,11 @@ target_link_libraries(dtmt
 #     OpenMP::OpenMP_CXX)
 
 # Exemplos com a morphotree
-add_executable(max_dist_attr src/max_dist_attr.cpp)
-target_link_libraries(max_dist_attr
+add_executable(max_dist_extiction_values 
+  src/max_dist_extiction_values.cpp
+  src/MaxDistComputer.cpp)
+
+target_link_libraries(max_dist_extiction_values
   morphotree
   gft 
   Threads::Threads
@@ -44,6 +47,7 @@ target_link_libraries(max_dist_attr
 add_executable(max_dist_attr_disp 
   src/MaxDistComputer.cpp
   src/max_dist_attr_disp.cpp)
+  
 target_link_libraries(max_dist_attr_disp
   morphotree
   gft
