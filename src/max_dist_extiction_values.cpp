@@ -40,11 +40,17 @@ int main(int argc, char *argv[])
   using morphotree::extinctionFilter;
   using morphotree::iextinctionFilter;
 
+  uint32 nleaves = 15;
+
   // check number of arguments from the command call
   if (argc < 3) {
     std::cerr << "usage error!\n";
-    std::cerr << "usage: max_dist_extiction_values <image> <out_img>\n";
+    std::cerr << "usage: max_dist_extiction_values <image> <out_img> [nleaves]\n";
     return -1;
+  }
+
+  if (argc > 3) {
+    nleaves = atoi(argv[3]);
   }
 
   // read image
@@ -81,7 +87,7 @@ int main(int argc, char *argv[])
   #endif
 
   // perform extinction filter
-  iextinctionFilter(maxtree, maxDist, 15);
+  iextinctionFilter(maxtree, maxDist, nleaves);
 
   std::cout << "FILTER\n";
   std::cout << "Number of nodes: " << maxtree.numberOfNodes() << std::endl;
