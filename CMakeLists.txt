@@ -1,6 +1,19 @@
+cmake_minimum_required(VERSION 3.10)
+
 project(EDT)
 
-cmake_minimum_required(VERSION 3.10)
+set(CMAKE_CXX_STANDARD 14)
+
+if(APPLE)
+    if(CMAKE_C_COMPILER_ID MATCHES "Clang\$")
+        set(OpenMP_C_FLAGS "-Xpreprocessor -fopenmp")
+    endif()
+
+    if(CMAKE_CXX_COMPILER_ID MATCHES "Clang\$")
+        set(OpenMP_CXX_FLAGS "-Xpreprocessor -fopenmp")
+    endif()
+
+endif()
 
 include_directories(
   "${CMAKE_CURRENT_SOURCE_DIR}/external/gft/include"
@@ -54,3 +67,15 @@ target_link_libraries(max_dist_attr_disp
   Threads::Threads
   ZLIB::ZLIB
   OpenMP::OpenMP_CXX)
+
+add_executable(ultimate_maxDist_open 
+src/MaxDistComputer.cpp
+src/UltimateAttributeOpening.cpp
+src/ultimate_maxDist_open.cpp)
+
+target_link_libraries(ultimate_maxDist_open
+morphotree
+gft 
+Threads::Threads
+ZLIB::ZLIB
+OpenMP::OpenMP_CXX)
