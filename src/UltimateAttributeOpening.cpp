@@ -1,8 +1,9 @@
 #include "UltimateAttributeOpening.hpp"
 
     
-    UltimateAttributeOpening::UltimateAttributeOpening(morphotree::MorphologicalTree<uint8> maxtree, int maxCriterion, std::vector<morphotree::uint32> attrs_increasing){
-      this->maxtree = maxtree;
+  UltimateAttributeOpening::UltimateAttributeOpening(const MTree &pmaxtree, int maxCriterion, std::vector<morphotree::uint32> attrs_increasing)
+    :maxtree{pmaxtree}
+  {      
       this->maxContrastLUT = new int[this->maxtree.numberOfNodes()];
       this->associatedIndexLUT = new int[this->maxtree.numberOfNodes()];
       this->attrs_increasing = attrs_increasing;

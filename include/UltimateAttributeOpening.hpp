@@ -16,7 +16,7 @@ class UltimateAttributeOpening{
     using MTree = morphotree::MorphologicalTree<uint8>;
     using NodePtr = MTree::NodePtr;
         
-    UltimateAttributeOpening(MTree tree, int maxCriterion, std::vector<uint32> attrs_increasing);
+    UltimateAttributeOpening(const MTree &ptree, int maxCriterion, std::vector<uint32> attrs_increasing);
 
     ~UltimateAttributeOpening();
 
