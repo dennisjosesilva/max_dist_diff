@@ -70,7 +70,6 @@ target_link_libraries(max_dist_attr_disp
 
 add_executable(ultimate_maxDist_open 
 src/MaxDistComputer.cpp
-src/UltimateAttributeOpening.cpp
 src/ultimate_maxDist_open.cpp)
 
 target_link_libraries(ultimate_maxDist_open
