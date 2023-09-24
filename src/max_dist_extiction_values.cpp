@@ -18,7 +18,7 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb_image_write.h>
 
-#define APPDEBUG
+//#define APPDEBUG
 
 int main(int argc, char *argv[])
 {
@@ -76,7 +76,6 @@ int main(int argc, char *argv[])
     maxtree.idirectFilter([&area, tarea](NodePtr node) { return area[node->id()] > tarea; });
   }
 
-
   std::cout << "Number of nodes: " << maxtree.numberOfNodes() << std::endl;
 
   // Extract leaves
@@ -87,8 +86,8 @@ int main(int argc, char *argv[])
   });
 
   // Exctiction value
-  std::vector<uint32> maxDist = AreaComputer<uint8>().computeAttribute(maxtree);
-  //computeMaxDistanceAttribute(domain, f, maxtree);
+  //std::vector<uint32> maxDist = AreaComputer<uint8>().computeAttribute(maxtree);
+  std::vector<uint32> maxDist = computeMaxDistanceAttribute(domain, f, maxtree);
 
   
   #ifdef APPDEBUG

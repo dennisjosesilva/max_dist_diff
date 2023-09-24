@@ -15,6 +15,9 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb_image_write.h>
 
+
+#define ONLY_ATTRIBUTE_VALUE
+
 int main(int argc, char *argv[])
 {
   using morphotree::uint8;
@@ -50,18 +53,23 @@ int main(int argc, char *argv[])
   std::vector<uint32> maxDistAttr = computeMaxDistanceAttribute(domain, f, tree);
 
   tree.tranverse([&maxDistAttr, &domain, &argv](NodePtr node){
-    std::vector<uint8> nodeImg(domain.numberOfPoints(), 0);
-    for (uint32 pidx : node->reconstruct()) {
-      nodeImg[pidx] = 255;
-    }
+    #ifndef ONLY_ATTRIBUTE_VALUE
+      std::vector<uint8> nodeImg(domain.numberOfPoints(), 0);
+      for (uint32 pidx : node->reconstruct()) {
+        nodeImg[pidx] = 255;
+      }
 
-    std::stringstream ss;
-    ss << argv[2] << "/" << "nodeId=" << node->id()
-       << "_maxDist=" << maxDistAttr[node->id()] << ".png";
-    
-    stbi_write_png(ss.str().c_str(), domain.width(), domain.height(), 1, nodeImg.data(), 0);
+      std::stringstream ss;
+      ss << argv[2] << "/" << "nodeId=" << node->id()
+        << "_maxDist=" << maxDistAttr[node->id()] << ".png";
+      
+      stbi_write_png(ss.str().c_str(), domain.width(), domain.height(), 1, nodeImg.data(), 0);
+    #else
+      std::cout << "max_dist[" << node->id() << "] = " << maxDistAttr[node->id()] << "\n";
+    #endif
   });
 
+  std::cout << "number of nodes: " << tree.numberOfNodes() << "\n";
   std::cout << "DONE\n";
 
   return 0;

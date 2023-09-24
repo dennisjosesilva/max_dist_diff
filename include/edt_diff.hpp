@@ -1,8 +1,11 @@
 
 #include <queue>
-#include <morphotree/core/alias.hpp>
+#include <gft.h>
 
-void treeRemoval(int *R, int nR,
+#include<vector>
+#include<morphotree/core/alias.hpp>
+
+void treeRemoval(const std::vector<morphotree::uint32> &toRemove,
 		 gft::sImage32 *bin,
 		 gft::sPQueue32 *Q,
 		 gft::sImage32 *root,
@@ -13,14 +16,24 @@ void treeRemoval(int *R, int nR,
   gft::Pixel u,v;
   int i, p, q;
 
-  for(i = 0; i < nR; i++){
-    p = R[i];
+
+
+  for(morphotree::uint32 pidx : toRemove){
+    p = static_cast<int>(pidx);
 
     //printf("R[%d] = %d\n", i, p);
 
     cost->data[p] = INT_MAX;
     pred->data[p] = NIL;
     root->data[p] = p;
+
+    //----------------------------------
+    /*
+    if(Q->L.elem[p].color == GRAY)
+      printf("Erro: %d\n",p);
+    */
+    //----------------------------------
+    
     Q->L.elem[p].color = WHITE;
     path.push(p);
   }
@@ -43,6 +56,14 @@ void treeRemoval(int *R, int nR,
 	  cost->data[q] = INT_MAX;
 	  pred->data[q] = NIL;
 	  root->data[q] = q;
+
+	  //----------------------------------
+	  /*
+	  if(Q->L.elem[q].color == GRAY)
+	    printf("Erro: %d\n",q);
+	  */
+	  //----------------------------------
+
 	  Q->L.elem[q].color = WHITE;
 	  path.push(q);
 	}
@@ -63,7 +84,9 @@ void treeRemoval(int *R, int nR,
   }
 }
 
-void treeRemoval(const std::vector<morphotree::uint32> &toRemove,
+
+
+void treeRemoval(int *R, int nR,
 		 gft::sImage32 *bin,
 		 gft::sPQueue32 *Q,
 		 gft::sImage32 *root,
@@ -74,61 +97,73 @@ void treeRemoval(const std::vector<morphotree::uint32> &toRemove,
   gft::Pixel u,v;
   int i, p, q;
 
-  for(morphotree::uint32 pidx : toRemove){ // set variables based on "toRemove" list
-    p = static_cast<int>(pidx);
+  for(i = 0; i < nR; i++){
+    p = R[i];
 
     //printf("R[%d] = %d\n", i, p);
-
-    
 
     cost->data[p] = INT_MAX;
     pred->data[p] = NIL;
     root->data[p] = p;
-    Q->L.elem[p].color = WHITE;
+
+    //----------------------------------
+    /*
+    if(Q->L.elem[p].color == GRAY)
+      printf("Erro: %d\n",p);
+    */
+    //----------------------------------
     
-    // adding which pidx to path.
+    Q->L.elem[p].color = WHITE;
     path.push(p);
   }
-  while(!path.empty()){  // while path is not empty
-    // take the first item from path and remove it
+  while(!path.empty()){
     p = path.front();
     path.pop();
 
-    // compute the coordinates of p
     u.x = p % cost->ncols;
     u.y = p / cost->ncols;
 
-    // take the neighbors of p
     for (i=1; i < A->n; i++){
       v.x = u.x + A->dx[i];
       v.y = u.y + A->dy[i];
       
-      // v is the neighbor of p in coordinates
-      if(v.x >= 0 && v.x < cost->ncols && v.y >= 0 && v.y < cost->nrows){
-        // if v is within the image domain        
-	      q = v.x + v.y * cost->ncols;
+      if(v.x >= 0 && v.x < cost->ncols &&
+	 v.y >= 0 && v.y < cost->nrows){
+	q = v.x + v.y * cost->ncols;
 
-        if(p == pred->data[q]){
-          cost->data[q] = INT_MAX;
-          pred->data[q] = NIL;
-          root->data[q] = q;
-          Q->L.elem[q].color = WHITE;
-          path.push(q);
-        }
-        else if(bin->data[q] > 0 && cost->data[root->data[q]] != INT_MAX) {
-          if(Q->L.elem[q].color != GRAY) {
-            Q->L.elem[q].color = WHITE;
+	if(p == pred->data[q]){
+	  cost->data[q] = INT_MAX;
+	  pred->data[q] = NIL;
+	  root->data[q] = q;
 
-            //gft::PQueue32::InsertElem(&Q, q);
-            gft::PQueue32::FastInsertElem(Q, q);
-            
-            //printf("Frontier: %d\n", q);
-          }
-        }
+	  //----------------------------------
+	  /*
+	  if(Q->L.elem[q].color == GRAY)
+	    printf("Erro: %d\n",q);
+	  */
+	  //----------------------------------
+
+	  Q->L.elem[q].color = WHITE;
+	  path.push(q);
+	}
+	else if(bin->data[q] > 0 &&
+		cost->data[root->data[q]] != INT_MAX){
+	  if(cost->data[q] != INT_MAX &&
+	     Q->L.elem[q].color != GRAY){
+	    Q->L.elem[q].color = WHITE;
+
+	    //gft::PQueue32::InsertElem(&Q, q);
+	    gft::PQueue32::FastInsertElem(Q, q);
+	    
+	    //printf("Frontier: %d\n", q);
+	  }
+	}
       }
     }
   }
 }
+
+
 
 void removeSubTree(int q_in,
 		   gft::sImage32 *bin,
@@ -199,13 +234,14 @@ void EDT_DIFF(gft::sPQueue32 *Q,
 	      gft::sImage32 *root,
 	      gft::sImage32 *pred,
 	      gft::sImage32 *cost,
-	      gft::sImage32 *Bedt){
-              //gft::sImage32 *Dx,
-              //gft::sImage32 *Dy){
+        gft::sImage32 *Bedt){
+	      //gft::sImage32 *Dx,
+	      //gft::sImage32 *Dy){
               //int *Seeds, int nSeeds){
   gft::Pixel u,v,t;
   int i, p, q, r;
   int tmp,dx,dy;
+
   /*
   for(i = 0; i < nSeeds; i++){
     p = Seeds[i];
@@ -220,7 +256,7 @@ void EDT_DIFF(gft::sPQueue32 *Q,
   */
   
   while(!gft::PQueue32::IsEmpty(Q)){
-    // printf("nadded: %d\n", Q->nadded);
+    //printf("nadded: %d\n", Q->nadded);
     //p = gft::PQueue32::RemoveMinFIFO(Q);
     p = gft::PQueue32::FastRemoveMinFIFO(Q);
     //printf("p: %d\n",p);
@@ -230,9 +266,9 @@ void EDT_DIFF(gft::sPQueue32 *Q,
     r = root->data[p];
     t.x = r % cost->ncols;
     t.y = r / cost->ncols;
-
-    Bedt->data[r] = MAX(Bedt->data[r], cost->data[p]);
     
+    Bedt->data[r] = MAX(Bedt->data[r], cost->data[p]);
+
     for (i=1; i < A->n; i++){
       v.x = u.x + A->dx[i];
       v.y = u.y + A->dy[i];
@@ -247,14 +283,15 @@ void EDT_DIFF(gft::sPQueue32 *Q,
 	  tmp = SQUARE(dx) + SQUARE(dy);
 
 	  if(tmp < cost->data[q]){
-	    if (cost->data[q] == INT_MAX){
+	    if(Q->L.elem[q].color != GRAY){ //(cost->data[q] == INT_MAX){
 	      cost->data[q]  = tmp;
 	      //gft::PQueue32::InsertElem(&Q, q);
 	      gft::PQueue32::FastInsertElem(Q, q);
 	    }
-	    else
+	    else{
 	      gft::PQueue32::FastUpdateElem(Q, q, tmp);
 	      //gft::PQueue32::UpdateElem(&Q, q, tmp);
+	    }
 	    
 	    pred->data[q] = p;
 	    root->data[q] = root->data[p];
