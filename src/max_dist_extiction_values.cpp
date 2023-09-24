@@ -41,17 +41,21 @@ int main(int argc, char *argv[])
   using morphotree::iextinctionFilter;
 
   uint32 nleaves = 15;
+  uint32 tarea = 0;
 
   // check number of arguments from the command call
-  if (argc < 3) {
+  if (argc < 4) {
     std::cerr << "usage error!\n";
-    std::cerr << "usage: max_dist_extiction_values <image> <out_img> [nleaves]\n";
+    std::cerr << "usage: max_dist_extiction_values <image> <out_img> <area> [nleaves] \n";
     return -1;
   }
 
-  if (argc > 3) {
-    nleaves = atoi(argv[3]);
+  if (argc > 4) {
+    nleaves = atoi(argv[4]);
   }
+
+  // get area threshold
+  tarea = atoi(argv[3]);
 
   // read image
   int width, height, nchannels;
@@ -66,6 +70,13 @@ int main(int argc, char *argv[])
   std::shared_ptr<Adjacency> adj = std::make_shared<Adjacency8C>(domain);
   MorphologicalTree<uint8> maxtree = buildMaxTree(f, adj);
 
+  // perform area filter if needed.
+  if (tarea > 0) {
+    std::vector<uint32> area = AreaComputer<uint8>().computeAttribute(maxtree);
+    maxtree.idirectFilter([&area, tarea](NodePtr node) { return area[node->id()] > tarea; });
+  }
+
+
   std::cout << "Number of nodes: " << maxtree.numberOfNodes() << std::endl;
 
   // Extract leaves
@@ -76,7 +87,9 @@ int main(int argc, char *argv[])
   });
 
   // Exctiction value
-  std::vector<uint32> maxDist = computeMaxDistanceAttribute(domain, f, maxtree);
+  std::vector<uint32> maxDist = AreaComputer<uint8>().computeAttribute(maxtree);
+  //computeMaxDistanceAttribute(domain, f, maxtree);
+
   
   #ifdef APPDEBUG
     //print exctition value 
