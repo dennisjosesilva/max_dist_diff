@@ -1,7 +1,49 @@
-#include "UltimateAttributeOpening.hpp"
+#pragma once 
+
+#include <morphotree/tree/mtree.hpp>
+#include <morphotree/core/box.hpp>
+
+#include <gft.h>
+
+#include <array>
+namespace morphotree{
+
+class UltimateAttributeOpening{
 
     
-  UltimateAttributeOpening::UltimateAttributeOpening(const MTree &pmaxtree, int maxCriterion, std::vector<morphotree::uint32> attrs_increasing)
+  public:
+    using uint8 = morphotree::uint8;
+    using uint32 = morphotree::uint32;
+    using MTree = morphotree::MorphologicalTree<uint8>;
+    using NodePtr = MTree::NodePtr;
+        
+    UltimateAttributeOpening(const MTree &ptree, int maxCriterion, std::vector<uint32> attrs_increasing);
+
+    ~UltimateAttributeOpening();
+
+    std::vector<uint8> createRandomColor(std::vector<uint32> img);
+
+    std::vector<uint8> getMaxConstrastImage();
+
+    std::vector<uint32> getAssociatedImage();
+
+    std::vector<uint8> getAssociatedColorImage();
+    
+    void computeUAO(NodePtr currentNode, int levelNodeNotInNR, bool qPropag);
+
+  private:
+    int maxCriterion;
+    std::vector<uint32> attrs_increasing;
+    MTree maxtree;
+    int* maxContrastLUT;
+    int* associatedIndexLUT;
+};
+
+
+
+
+
+  morphotree::UltimateAttributeOpening::UltimateAttributeOpening(const MTree &pmaxtree, int maxCriterion, std::vector<morphotree::uint32> attrs_increasing)
     :maxtree{pmaxtree}
   {      
       this->maxContrastLUT = new int[this->maxtree.numberOfNodes()];
@@ -20,12 +62,12 @@
 	    }
     }
 
-    UltimateAttributeOpening::~UltimateAttributeOpening(){
+    morphotree::UltimateAttributeOpening::~UltimateAttributeOpening(){
       free(maxContrastLUT);
       free(associatedIndexLUT);
     }
 
-    std::vector<morphotree::uint8> UltimateAttributeOpening::createRandomColor(std::vector<morphotree::uint32> img){
+    std::vector<morphotree::uint8> morphotree::UltimateAttributeOpening::createRandomColor(std::vector<morphotree::uint32> img){
       int max = 0;
       for(int i=0; i < img.size(); i++){
         if(max < img[i])
@@ -55,7 +97,7 @@
       return output;
     }
 
-    std::vector<morphotree::uint8> UltimateAttributeOpening::getMaxConstrastImage(){
+    std::vector<morphotree::uint8> morphotree::UltimateAttributeOpening::getMaxConstrastImage(){
       std::vector<uint8> out(maxtree.numberOfCNPs(), 0);
       
       for (int pidx=0; pidx < maxtree.numberOfCNPs(); pidx++) {
@@ -64,7 +106,7 @@
       return out;
     }
 
-    std::vector<morphotree::uint32> UltimateAttributeOpening::getAssociatedImage(){
+    std::vector<morphotree::uint32> morphotree::UltimateAttributeOpening::getAssociatedImage(){
       std::vector<uint32> out(maxtree.numberOfCNPs(), 0);
       for (int pidx=0; pidx < maxtree.numberOfCNPs(); pidx++) {
         out[pidx] = associatedIndexLUT[maxtree.smallComponent(pidx)->id()];
@@ -72,14 +114,14 @@
       return out;
     }
 
-    std::vector<morphotree::uint8> UltimateAttributeOpening::getAssociatedColorImage(){
+    std::vector<morphotree::uint8> morphotree::UltimateAttributeOpening::getAssociatedColorImage(){
       return createRandomColor(getAssociatedImage());
     }
 
   
 
 
-    void UltimateAttributeOpening::computeUAO(NodePtr currentNode, int levelNodeNotInNR, bool qPropag){
+    void morphotree::UltimateAttributeOpening::computeUAO(NodePtr currentNode, int levelNodeNotInNR, bool qPropag){
       NodePtr parentNode = currentNode->parent();
       bool flagPropag = false;
       if (this->attrs_increasing[currentNode->id()] != this->attrs_increasing[currentNode->id()]){
@@ -111,3 +153,4 @@
     }
 
  
+}
