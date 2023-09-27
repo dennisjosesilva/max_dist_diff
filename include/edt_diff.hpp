@@ -1,11 +1,10 @@
 
 #include <queue>
 #include <gft.h>
+#include <vector>
+#include <morphotree/core/alias.hpp>
 
-#include<vector>
-#include<morphotree/core/alias.hpp>
-
-void treeRemoval(const std::vector<morphotree::uint32> &toRemove,
+void treeRemoval(const std::vector<morphotree::uint32> &toRemove, 
 		 gft::sImage32 *bin,
 		 gft::sPQueue32 *Q,
 		 gft::sImage32 *root,
@@ -16,8 +15,6 @@ void treeRemoval(const std::vector<morphotree::uint32> &toRemove,
   gft::Pixel u,v;
   int i, p, q;
 
-
-
   for(morphotree::uint32 pidx : toRemove){
     p = static_cast<int>(pidx);
 
@@ -26,14 +23,6 @@ void treeRemoval(const std::vector<morphotree::uint32> &toRemove,
     cost->data[p] = INT_MAX;
     pred->data[p] = NIL;
     root->data[p] = p;
-
-    //----------------------------------
-    /*
-    if(Q->L.elem[p].color == GRAY)
-      printf("Erro: %d\n",p);
-    */
-    //----------------------------------
-    
     Q->L.elem[p].color = WHITE;
     path.push(p);
   }
@@ -56,14 +45,6 @@ void treeRemoval(const std::vector<morphotree::uint32> &toRemove,
 	  cost->data[q] = INT_MAX;
 	  pred->data[q] = NIL;
 	  root->data[q] = q;
-
-	  //----------------------------------
-	  /*
-	  if(Q->L.elem[q].color == GRAY)
-	    printf("Erro: %d\n",q);
-	  */
-	  //----------------------------------
-
 	  Q->L.elem[q].color = WHITE;
 	  path.push(q);
 	}
@@ -85,7 +66,6 @@ void treeRemoval(const std::vector<morphotree::uint32> &toRemove,
 }
 
 
-
 void treeRemoval(int *R, int nR,
 		 gft::sImage32 *bin,
 		 gft::sPQueue32 *Q,
@@ -105,14 +85,6 @@ void treeRemoval(int *R, int nR,
     cost->data[p] = INT_MAX;
     pred->data[p] = NIL;
     root->data[p] = p;
-
-    //----------------------------------
-    /*
-    if(Q->L.elem[p].color == GRAY)
-      printf("Erro: %d\n",p);
-    */
-    //----------------------------------
-    
     Q->L.elem[p].color = WHITE;
     path.push(p);
   }
@@ -135,14 +107,6 @@ void treeRemoval(int *R, int nR,
 	  cost->data[q] = INT_MAX;
 	  pred->data[q] = NIL;
 	  root->data[q] = q;
-
-	  //----------------------------------
-	  /*
-	  if(Q->L.elem[q].color == GRAY)
-	    printf("Erro: %d\n",q);
-	  */
-	  //----------------------------------
-
 	  Q->L.elem[q].color = WHITE;
 	  path.push(q);
 	}
@@ -234,14 +198,13 @@ void EDT_DIFF(gft::sPQueue32 *Q,
 	      gft::sImage32 *root,
 	      gft::sImage32 *pred,
 	      gft::sImage32 *cost,
-        gft::sImage32 *Bedt){
-	      //gft::sImage32 *Dx,
-	      //gft::sImage32 *Dy){
+	      gft::sImage32 *Bedt){
+              //gft::sImage32 *Dx,
+              //gft::sImage32 *Dy){
               //int *Seeds, int nSeeds){
   gft::Pixel u,v,t;
   int i, p, q, r;
   int tmp,dx,dy;
-
   /*
   for(i = 0; i < nSeeds; i++){
     p = Seeds[i];
@@ -266,9 +229,9 @@ void EDT_DIFF(gft::sPQueue32 *Q,
     r = root->data[p];
     t.x = r % cost->ncols;
     t.y = r / cost->ncols;
-    
-    Bedt->data[r] = MAX(Bedt->data[r], cost->data[p]);
 
+    Bedt->data[r] = MAX(Bedt->data[r], cost->data[p]);
+    
     for (i=1; i < A->n; i++){
       v.x = u.x + A->dx[i];
       v.y = u.y + A->dy[i];
@@ -277,35 +240,34 @@ void EDT_DIFF(gft::sPQueue32 *Q,
 	 v.y >= 0 && v.y < cost->nrows){
 	q = v.x + v.y * cost->ncols;
 	
-	if(cost->data[p] < cost->data[q]){
-	  dx  = v.x - t.x; //Dx->data[p] + abs(A->dx[i]);
-	  dy  = v.y - t.y; //Dy->data[p] + abs(A->dy[i]);
-	  tmp = SQUARE(dx) + SQUARE(dy);
+	//if(cost->data[p] < cost->data[q]){
+	dx  = v.x - t.x; //Dx->data[p] + abs(A->dx[i]);
+	dy  = v.y - t.y; //Dy->data[p] + abs(A->dy[i]);
+	tmp = SQUARE(dx) + SQUARE(dy);
 
-	  if(tmp < cost->data[q]){
-	    if(Q->L.elem[q].color != GRAY){ //(cost->data[q] == INT_MAX){
-	      cost->data[q]  = tmp;
-	      //gft::PQueue32::InsertElem(&Q, q);
-	      gft::PQueue32::FastInsertElem(Q, q);
-	    }
-	    else{
-	      gft::PQueue32::FastUpdateElem(Q, q, tmp);
-	      //gft::PQueue32::UpdateElem(&Q, q, tmp);
-	    }
-	    
-	    pred->data[q] = p;
-	    root->data[q] = root->data[p];
-	    //Dx->data[q] = dx;
-	    //Dy->data[q] = dy;
+	if(tmp < cost->data[q]){
+	  if(Q->L.elem[q].color != GRAY){ //if (cost->data[q] == INT_MAX){
+	    cost->data[q]  = tmp;
+	    //gft::PQueue32::InsertElem(&Q, q);
+	    gft::PQueue32::FastInsertElem(Q, q);
 	  }
-	  else if(pred->data[q] == p){
-	    if(tmp > cost->data[q] ||
-	       root->data[p] != root->data[q]){
-	      removeSubTree(q, bin, Q, root, pred, cost, A);
-	      break;
-	    }
+	  else
+	    gft::PQueue32::FastUpdateElem(Q, q, tmp);
+	  //gft::PQueue32::UpdateElem(&Q, q, tmp);
+	    
+	  pred->data[q] = p;
+	  root->data[q] = root->data[p];
+	  //Dx->data[q] = dx;
+	  //Dy->data[q] = dy;
+	}
+	else if(pred->data[q] == p){
+	  if(tmp > cost->data[q] ||
+	     root->data[p] != root->data[q]){
+	    removeSubTree(q, bin, Q, root, pred, cost, A);
+	    break;
 	  }
 	}
+	//}
       }
     }
   }
