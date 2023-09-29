@@ -140,8 +140,8 @@ void BasicAttributeComputer::BasicAttributeIncrementalComputer
   BasicAttributes      &nodeAttrs    = attrs_[node->id()];
   const AuxAttributes  &nodeAuxAttrs = auxAttrs_[node->id()];
 
-  I32Point centroid{ nodeAuxAttrs.m10 / nodeAttrs.area_, 
-    nodeAuxAttrs.m01 / nodeAttrs.area_ };
+  I32Point centroid{ static_cast<int>(nodeAuxAttrs.m10 / nodeAttrs.area_), 
+    static_cast<int>(nodeAuxAttrs.m01 / nodeAttrs.area_) };
   
   nodeAttrs.varianceLevel_ += 
     (((nodeAttrs.meanLevel_ - node->level()) * (nodeAttrs.meanLevel_ - node->level()))
@@ -179,8 +179,31 @@ void BasicAttributeComputer::BasicAttributeIncrementalComputer
   }
 }
 
+void BasicAttributeComputer::BasicAttributeIncrementalComputer
+  ::mergeToParent(NodePtr node, NodePtr parent)
+{
+  BasicAttributes &nodeAttrs = attrs_[node->id()];
+  BasicAttributes &parentAttrs = attrs_[parent->id()];
+  
+  parentAttrs.moment02_ += nodeAttrs.moment02_;
+  parentAttrs.moment20_ += nodeAttrs.moment20_;
+  parentAttrs.varianceLevel_ += nodeAttrs.varianceLevel_;
+}
+
 float BasicAttributeComputer::BasicAttributeIncrementalComputer
   ::normMoment(float area, float moment, int p, int q) const
 {
   return moment / std::pow( area, (p + q + 2.0) / 2.0);
+}
+
+
+// =====================================================================================
+// UTIL FUNCTION
+// =====================================================================================
+std::vector<BasicAttributes> computeBasicAttributes(
+  const BasicAttributeComputer::Box &domain,
+  const std::vector<BasicAttributeComputer::uint8> &f, 
+  const BasicAttributeComputer::MTree &tree)
+{
+  return BasicAttributeComputer(domain, f).computeAttribute(tree);
 }

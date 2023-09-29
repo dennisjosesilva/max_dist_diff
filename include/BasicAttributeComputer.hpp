@@ -18,6 +18,7 @@ public:
   float ratioWH() const { return ratioWH_; }
   float moment02() const { return moment02_; }
   float moment20() const { return moment20_; }
+  float moment11() const { return moment11_; }
   float inertia() const { return inertia_; }
   float orientation() const { return orientation_; }
   float lenMajorAxis() const { return lenMajorAxis_; }
@@ -124,3 +125,9 @@ private:
     BasicAttributeIncrementalComputer &incrBasicAttrComputer);
 };
 
+
+
+std::vector<BasicAttributes> computeBasicAttributes(
+  const BasicAttributeComputer::Box &domain,
+  const std::vector<BasicAttributeComputer::uint8> &f, 
+  const BasicAttributeComputer::MTree &tree);

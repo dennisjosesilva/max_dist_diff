@@ -78,3 +78,13 @@ gft
 Threads::Threads
 ZLIB::ZLIB
 OpenMP::OpenMP_CXX)
+
+
+# Direct filter
+add_executable(direct_filter 
+  src/BasicAttributeComputer.cpp
+  src/direct_filter.cpp)
+  
+target_link_libraries(direct_filter
+  morphotree  
+  OpenMP::OpenMP_CXX)
