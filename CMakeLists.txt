@@ -88,3 +88,12 @@ add_executable(direct_filter
 target_link_libraries(direct_filter
   morphotree  
   OpenMP::OpenMP_CXX)
+
+# basic attr display
+add_executable(basic_attr_disp 
+  src/BasicAttributeComputer.cpp
+  src/basic_attr_disp.cpp)
+  
+target_link_libraries(basic_attr_disp
+  morphotree  
+  OpenMP::OpenMP_CXX)  

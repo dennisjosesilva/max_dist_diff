@@ -7,6 +7,8 @@
 class BasicAttributes
 {
 public:
+  BasicAttributes();
+
   float area() const { return area_; }
   float volume() const { return volume_; }
   float level() const { return level_; }
@@ -31,7 +33,7 @@ private:
   float volume_;
   float level_;
   float meanLevel_;
-  float varianceLevel_;
+  double varianceLevel_;
   float width_;
   float height_;
   float rectangularity_;
@@ -71,58 +73,31 @@ private:
 private:
   struct AuxAttributes
   {
+    AuxAttributes(const Box &domain);
+
     int xmax;
     int ymax;
     int xmin;
     int ymin;
-    int m10;
-    int m01;
-    int m20;
-    int m02;
-    int m11;
+    unsigned long m10;
+    unsigned long m01;
+    unsigned long m20;
+    unsigned long m02;
+    unsigned long m11;
+    unsigned long graySquared;
   }; 
 
-  class AuxAttributesComputer 
-  {
-  public:
-    AuxAttributesComputer(const Box &domain, const std::vector<uint8> &f,
-      std::vector<AuxAttributes> &auxAttrs, std::vector<BasicAttributes> &attrs);
+private:
+  void computeAtCNPs(std::vector<AuxAttributes> &auxAttrs, std::vector<BasicAttributes> &attrs,
+    NodePtr node);
 
-    void computeAtCNPs(NodePtr node);
-    void mergeToParent(NodePtr node, NodePtr parent);
+  void mergeToParent(std::vector<AuxAttributes> &auxAttrs, std::vector<BasicAttributes> &attrs,
+    NodePtr node, NodePtr parent);
 
-  private:
-    const std::vector<uint8> &f_;
-    const Box &domain_;
-    std::vector<AuxAttributes> &auxAttrs_;
-    std::vector<BasicAttributes> &attrs_;
-  };
+  void finalizeComputation(std::vector<AuxAttributes> &auxAttrs, std::vector<BasicAttributes> &attrs,
+    NodePtr node);
 
-  class BasicAttributeIncrementalComputer
-  {
-  public:
-    BasicAttributeIncrementalComputer(const Box &domain, const std::vector<uint8> &f,
-      const std::vector<AuxAttributes> &auxAttrs, std::vector<BasicAttributes> &attrs);
-
-    void computeAtCNPs(NodePtr node);
-    void mergeToParent(NodePtr node, NodePtr parent);
-
-  private:
-    float normMoment(float area, float moment, int p, int q) const;
-
-  private:
-    const std::vector<uint8> &f_;
-    const Box &domain_;
-    const std::vector<AuxAttributes> &auxAttrs_;
-    std::vector<BasicAttributes> &attrs_;
-  };
-
-private:   
-  void computeAuxAttributes(const MTree &tree,
-    AuxAttributesComputer &auxAttrComputer);
-  
-  void computeBasicAttributes(const MTree &tree,
-    BasicAttributeIncrementalComputer &incrBasicAttrComputer);
+  float normMoment(float area, float moment, int p, int q) const;
 };
 
 

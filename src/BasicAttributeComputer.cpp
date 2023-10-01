@@ -2,10 +2,45 @@
 #include <algorithm>
 #include <cmath>
 
+// ========================================================
+// BASIC ATTRIBUTES
+// ========================================================
+BasicAttributes::BasicAttributes():
+  area_{0.0f},
+  volume_{0.0f},
+  level_{0.0f},
+  meanLevel_{0.0f},
+  varianceLevel_{0.0f},
+  width_{0.0f},
+  height_{0.0f},
+  rectangularity_{0.0f},
+  ratioWH_{0.0f},
+  moment02_{0.0f},
+  moment20_{0.0f},
+  moment11_{0.0f},
+  inertia_{0.0f},
+  lenMajorAxis_{0.0f},
+  lenMinorAxis_{0.0f},
+  eccentricity_{0.0f},
+  compactness_{0.0f}
+{}
+
+BasicAttributeComputer::AuxAttributes::AuxAttributes(const Box &domain)
+  : xmax{domain.left()},
+    xmin{domain.right()},
+    ymin{domain.bottom()},
+    ymax{domain.top()},
+    m10{0},
+    m01{0},
+    m20{0},
+    m02{0},
+    m11{0},
+    graySquared{0}
+{}
+
 // =========================================================
 // MAIN CLASS
 // =========================================================
-
 BasicAttributeComputer::BasicAttributeComputer(
   const Box &domain, const std::vector<uint8> &f)
   : domain_{domain}, f_{f}
@@ -14,188 +49,129 @@ BasicAttributeComputer::BasicAttributeComputer(
 std::vector<BasicAttributes> 
   BasicAttributeComputer::computeAttribute(const MTree &tree)
 {
-  std::vector<AuxAttributes> auxAttrs(tree.numberOfNodes());
+  std::vector<AuxAttributes> auxAttrs(tree.numberOfNodes(), AuxAttributes{domain_});
   std::vector<BasicAttributes> attrs(tree.numberOfNodes());
+  
+  tree.tranverse([&auxAttrs, &attrs, this](NodePtr node){
+    computeAtCNPs(auxAttrs, attrs, node);
 
-  AuxAttributesComputer auxAttrComputer{domain_, f_, auxAttrs, attrs};
-  BasicAttributeIncrementalComputer basicAttrComputer{domain_, f_, auxAttrs, attrs};
+    if (node->parent() != nullptr) {
+      mergeToParent(auxAttrs, attrs, node, node->parent());
+    }
 
-  computeAuxAttributes(tree, auxAttrComputer);
-  computeBasicAttributes(tree, basicAttrComputer);
+    // finalise computation
+    finalizeComputation(auxAttrs, attrs, node);
+  });
 
   return attrs;
 }
 
-void BasicAttributeComputer::computeAuxAttributes(const MTree &tree,
-  AuxAttributesComputer &auxAttrComputer)
-{
-  tree.tranverse([this,&auxAttrComputer](NodePtr node){
-    auxAttrComputer.computeAtCNPs(node);
-
-    if (node->parent() != nullptr) 
-      auxAttrComputer.mergeToParent(node, node->parent());
-  });
-}
-
-void BasicAttributeComputer::computeBasicAttributes(const MTree &tree,
-  BasicAttributeIncrementalComputer &incrBasicAttrComputer)
-{
-  tree.tranverse([this, &incrBasicAttrComputer](NodePtr node){
-    incrBasicAttrComputer.computeAtCNPs(node);
-
-    if (node->parent() != nullptr)
-      incrBasicAttrComputer.mergeToParent(node, node->parent());
-  });
-}
-
-// =======================================================================
-// AUXILIARY ATTRIBUTE COMPUTER 
-// =======================================================================
-BasicAttributeComputer::AuxAttributesComputer::AuxAttributesComputer(
-  const Box &domain, 
-  const std::vector<uint8> &f, 
-  std::vector<AuxAttributes> &auxAttrs,
-  std::vector<BasicAttributes> &attrs)
-  : domain_{domain}, f_{f}, auxAttrs_{auxAttrs}, attrs_{attrs}
-{}
-
-void BasicAttributeComputer::AuxAttributesComputer::computeAtCNPs(
-  NodePtr node)
+void BasicAttributeComputer::computeAtCNPs(std::vector<AuxAttributes> &auxAttrs, 
+  std::vector<BasicAttributes> &attrs, NodePtr node)
 {
   using morphotree::I32Point;
 
-  AuxAttributes &nodeAuxAttrs = auxAttrs_[node->id()];
-  BasicAttributes &nodeAttrs = attrs_[node->id()];
+  // Recover attributes
+  BasicAttributes &nodeAttrs = attrs[node->id()];
+  AuxAttributes &nodeAuxAttrs = auxAttrs[node->id()];
 
-  nodeAttrs.area_          += node->cnps().size();
-  nodeAttrs.volume_        += node->cnps().size() * node->level();
-  nodeAttrs.level_          = node->level();
-  nodeAttrs.varianceLevel_ += node->cnps().size() * (node->level() * node->level());
+  nodeAttrs.area_ += node->cnps().size();
+  nodeAttrs.volume_ += node->cnps().size() * static_cast<int>(node->level());
+  nodeAttrs.level_ = node->level();
 
-  // compute auxiliary attributes
-  for (uint32 pidx : node->cnps()) {
+  nodeAuxAttrs.graySquared += std::pow(static_cast<unsigned long>(node->level()), 2) * node->cnps().size(); // computes \sum f(p)^2
+
+  for (uint32 pidx : node->cnps())   {
     I32Point p = domain_.indexToPoint(pidx);
-
-    nodeAuxAttrs.xmin = std::min(nodeAuxAttrs.xmin, p.x());
-    nodeAuxAttrs.ymin = std::min(nodeAuxAttrs.ymin, p.y());
-    nodeAuxAttrs.xmax = std::max(nodeAuxAttrs.xmax, p.x());
-    nodeAuxAttrs.ymax = std::max(nodeAuxAttrs.ymax, p.y());
-
+    nodeAuxAttrs.xmin = std::min(p.x(), nodeAuxAttrs.xmin);
+    nodeAuxAttrs.xmax = std::max(p.x(), nodeAuxAttrs.xmax);
+    nodeAuxAttrs.ymin = std::min(p.y(), nodeAuxAttrs.ymin);
+    nodeAuxAttrs.ymax = std::max(p.y(), nodeAuxAttrs.ymax);
     nodeAuxAttrs.m10 += p.x();
     nodeAuxAttrs.m01 += p.y();
-    nodeAuxAttrs.m11 += (p.x() + p.y());
-    nodeAuxAttrs.m20 += (p.x()* p.x());
-    nodeAuxAttrs.m02 += (p.y() * p.y());
+    nodeAuxAttrs.m11 += p.x() * p.y();
+    nodeAuxAttrs.m20 += p.x() * p.x();
+    nodeAuxAttrs.m02 += p.y() * p.y();
   }
-
-  // Attributes are finalised.
-  nodeAttrs.meanLevel_      = nodeAttrs.volume_ / nodeAttrs.area_;
-  nodeAttrs.width_          = nodeAuxAttrs.xmax - nodeAuxAttrs.xmin + 1;
-  nodeAttrs.height_         = nodeAuxAttrs.ymax - nodeAuxAttrs.ymin + 1;
-  nodeAttrs.rectangularity_ = nodeAttrs.area_ / (nodeAttrs.width_ * nodeAttrs.height_);
-  nodeAttrs.ratioWH_        = std::max(nodeAttrs.width_, nodeAttrs.height_) / 
-                                std::min(nodeAttrs.width_, nodeAttrs.height_);
 }
 
-void BasicAttributeComputer::AuxAttributesComputer::mergeToParent(
-  NodePtr node, NodePtr parent)
+void BasicAttributeComputer::mergeToParent(std::vector<AuxAttributes> &auxAttrs, 
+  std::vector<BasicAttributes> &attrs, NodePtr node, NodePtr parent)
 {
-  BasicAttributes &nodeAttrs = attrs_[node->id()];
-  BasicAttributes &parentAttrs = attrs_[parent->id()];
+  AuxAttributes &nodeAuxAttrs =  auxAttrs[node->id()];
+  AuxAttributes &parentAuxAttrs = auxAttrs[parent->id()];
 
-  AuxAttributes &nodeAuxAttrs = auxAttrs_[node->id()];
-  AuxAttributes &parentAuxAttrs  = auxAttrs_[parent->id()];
+  BasicAttributes &nodeAttrs = attrs[node->id()];
+  BasicAttributes &parentAttrs = attrs[parent->id()];
 
   parentAttrs.area_ += nodeAttrs.area_;
   parentAttrs.volume_ += nodeAttrs.volume_;
-  parentAttrs.varianceLevel_ += nodeAttrs.varianceLevel_;
+
+  parentAuxAttrs.graySquared += nodeAuxAttrs.graySquared;
 
   parentAuxAttrs.xmin = std::min(parentAuxAttrs.xmin, nodeAuxAttrs.xmin);
-  parentAuxAttrs.ymin = std::min(parentAuxAttrs.ymin, nodeAuxAttrs.ymin);
   parentAuxAttrs.xmax = std::max(parentAuxAttrs.xmax, nodeAuxAttrs.xmax);
+  parentAuxAttrs.ymin = std::min(parentAuxAttrs.ymin, nodeAuxAttrs.ymin);
   parentAuxAttrs.ymax = std::max(parentAuxAttrs.ymax, nodeAuxAttrs.ymax);
 
-  parentAuxAttrs.m10 += nodeAuxAttrs.m10;
   parentAuxAttrs.m01 += nodeAuxAttrs.m01;
+  parentAuxAttrs.m10 += nodeAuxAttrs.m10;
   parentAuxAttrs.m11 += nodeAuxAttrs.m11;
   parentAuxAttrs.m20 += nodeAuxAttrs.m20;
   parentAuxAttrs.m02 += nodeAuxAttrs.m02;
 }
 
-// =======================================================================
-// INCREMENTAL BASIC ATTRIBUTES COMPUTER 
-// =======================================================================
-BasicAttributeComputer::BasicAttributeIncrementalComputer
-  ::BasicAttributeIncrementalComputer(const Box &domain,
-    const std::vector<uint8> &f, const std::vector<AuxAttributes> &auxAttrs,
-    std::vector<BasicAttributes> &attrs)
-    : domain_{domain}, f_{f}, auxAttrs_{auxAttrs}, attrs_{attrs}
-{}
-
-void BasicAttributeComputer::BasicAttributeIncrementalComputer
-  ::computeAtCNPs(NodePtr node)
+void BasicAttributeComputer::finalizeComputation(std::vector<AuxAttributes> &auxAttrs,
+  std::vector<BasicAttributes> &attrs, NodePtr node)
 {
-  using morphotree::I32Point;
+  BasicAttributes &nodeAttrs = attrs[node->id()];
+  AuxAttributes &nodeAuxAttrs = auxAttrs[node->id()];
 
-  BasicAttributes      &nodeAttrs    = attrs_[node->id()];
-  const AuxAttributes  &nodeAuxAttrs = auxAttrs_[node->id()];
+  float area = nodeAttrs.area_;
+  float volume = nodeAttrs.volume_;
+  float width = nodeAuxAttrs.xmax - nodeAuxAttrs.xmin + 1;
+  float height = nodeAuxAttrs.ymax - nodeAuxAttrs.ymin + 1;
 
-  I32Point centroid{ static_cast<int>(nodeAuxAttrs.m10 / nodeAttrs.area_), 
-    static_cast<int>(nodeAuxAttrs.m01 / nodeAttrs.area_) };
+  nodeAttrs.meanLevel_ = volume / area;
+  nodeAttrs.varianceLevel_ = (nodeAuxAttrs.graySquared / area) - std::pow((volume / area), 2); // variance
+  nodeAttrs.width_ = width;
+  nodeAttrs.height_ = height;
+  nodeAttrs.rectangularity_ = area / (width * height);
+  nodeAttrs.ratioWH_ =  static_cast<float>(std::max(width, height))  / static_cast<float>(std::min(width, height));
   
-  nodeAttrs.varianceLevel_ += 
-    (((nodeAttrs.meanLevel_ - node->level()) * (nodeAttrs.meanLevel_ - node->level()))
-    * node->cnps().size());
+  // ======================
+  // Central moments
+  // ======================
+  float xCentroid = nodeAuxAttrs.m10 / area;
+  float yCentroid = nodeAuxAttrs.m01 / area;
 
-  for (uint32 pidx : node->cnps()) {
-    I32Point p = domain_.indexToPoint(pidx);
-    nodeAttrs.moment20_ += ((p.x() - centroid.x()) * (p.x() - centroid.x()));
-    nodeAttrs.moment02_ += ((p.y() - centroid.y()) * (p.y() - centroid.y()));
-    nodeAttrs.moment11_ += ((p.x() - centroid.x()) * (p.y() - centroid.y()));
-  }
-
-  // Attributes are finalised.
-  float sumDiffLevel2 = static_cast<float>(nodeAttrs.varianceLevel_);
-  float area = static_cast<float>(nodeAttrs.area_);
-  nodeAttrs.varianceLevel_ = sumDiffLevel2 / area;
+  nodeAttrs.moment20_ = nodeAuxAttrs.m20 - (nodeAuxAttrs.m10 * xCentroid);
+  nodeAttrs.moment02_ = nodeAuxAttrs.m02 - (nodeAuxAttrs.m01 * yCentroid);
+  nodeAttrs.moment11_ = nodeAuxAttrs.m11 - (xCentroid * nodeAuxAttrs.m01);
 
   float moment20 = nodeAttrs.moment20_;
   float moment02 = nodeAttrs.moment02_;
   float moment11 = nodeAttrs.moment11_;
 
   if (area > 1) {
-    float a1 = moment20 + moment02 + 
-      std::sqrt(std::pow(moment20 - moment02, 2) + 4 * std::pow(moment11, 2));
-    float a2 = moment20 + moment02 - 
-      std::sqrt(std::pow(moment20 - moment02, 2) + 4 * std::pow(moment11, 2));
-    nodeAttrs.inertia_ = normMoment(area, moment02, 0, 2) 
-      + normMoment(area, moment20, 2, 0);  // hu = inertia
-    nodeAttrs.orientation_ = 0.5f * std::atan2(2 * moment11, moment20 - moment02); // orientation
+    float a1 = moment20 + moment02 + std::sqrt(std::pow(moment20 - moment02, 2) + 4.0f * std::pow(moment11, 2));
+    float a2 = moment20 + moment02 - std::sqrt(std::pow(moment20 - moment02, 2) + 4.0f * std::pow(moment11, 2));
+    nodeAttrs.inertia_ = normMoment(area, moment02, 0, 2) + normMoment(area, moment20, 2, 0); //hu
+    nodeAttrs.orientation_ = 0.5f * std::atan2(2.f * moment11, moment20 - moment02);
+    
+    nodeAttrs.lenMajorAxis_ = std::sqrt((2 * a1) / area);
+    nodeAttrs.lenMinorAxis_ = std::sqrt((2 * a2) / area);
 
-    nodeAttrs.lenMajorAxis_ = std::sqrt( (2 * a1) / area ); // length major axis
-    nodeAttrs.lenMinorAxis_ = std::sqrt( (2 * a2) / area ); // length minor axis
-    nodeAttrs.eccentricity_ = (a2 != 0 ? a1 / a2 : a1 / 0.1); // eccentricity
-    nodeAttrs.compactness_ = (1.0f / (2.0f*M_PI)) * (area / (moment20 + moment02)); // compactness
+    nodeAttrs.eccentricity_ = (a2 != 0 ? a1 / a2 : a1 / 0.1f);
+
+    nodeAttrs.compactness_ = (1.0f / (2.0f * M_PI)) * (area / (moment20 + moment02)); 
   }
 }
 
-void BasicAttributeComputer::BasicAttributeIncrementalComputer
-  ::mergeToParent(NodePtr node, NodePtr parent)
-{
-  BasicAttributes &nodeAttrs = attrs_[node->id()];
-  BasicAttributes &parentAttrs = attrs_[parent->id()];
-  
-  parentAttrs.moment02_ += nodeAttrs.moment02_;
-  parentAttrs.moment20_ += nodeAttrs.moment20_;
-  parentAttrs.varianceLevel_ += nodeAttrs.varianceLevel_;
-}
-
-float BasicAttributeComputer::BasicAttributeIncrementalComputer
-  ::normMoment(float area, float moment, int p, int q) const
+float BasicAttributeComputer::normMoment(float area, float moment, int p, int q) const
 {
   return moment / std::pow( area, (p + q + 2.0) / 2.0);
 }
-
 
 // =====================================================================================
 // UTIL FUNCTION
