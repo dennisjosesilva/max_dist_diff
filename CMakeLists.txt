@@ -97,3 +97,16 @@ add_executable(basic_attr_disp
 target_link_libraries(basic_attr_disp
   morphotree  
   OpenMP::OpenMP_CXX)  
+
+
+# display maximum distance attribute.
+add_executable(diff_max_dist_runtime 
+  src/MaxDistComputer.cpp
+  src/diff_max_dist_runtime.cpp)
+  
+target_link_libraries(diff_max_dist_runtime
+  morphotree
+  gft
+  Threads::Threads
+  ZLIB::ZLIB
+  OpenMP::OpenMP_CXX)
