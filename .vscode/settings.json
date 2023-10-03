@@ -53,8 +53,13 @@
     "bit": "cpp"
   },
   "cSpell.words": [
+    "Bedt",
     "cnps",
     "morphotree",
+    "ncols",
+    "Ncontour",
+    "ncount",
+    "neighbours",
     "pidx"
   ],
   "C_Cpp.codeAnalysis.clangTidy.checks.disabled": [

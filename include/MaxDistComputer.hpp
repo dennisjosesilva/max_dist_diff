@@ -14,6 +14,7 @@ public:
   using NodePtr = MTree::NodePtr;
   using Box = morphotree::Box;
   using Adjacency = morphotree::Adjacency;
+  using I32Point = morphotree::I32Point;
 
   MaxDistComputer(const Box& domain, const std::vector<uint8> &f);
 
@@ -26,14 +27,18 @@ private:
 
   void insertNeighborsPQueue(
     uint32 pidx, 
-    std::shared_ptr<Adjacency> adj,
     gft::sImage32 *bin,
     gft::sImage32 *cost,
     gft::sPQueue32 *Q) const;
 
+
+
 private:
   const Box &domain_;
   const std::vector<uint8> &f_;
+
+  const std::vector<I32Point> OFFSET_NEIGHBOUR;
+
 };
 
 

@@ -27,7 +27,8 @@ std::vector<morphotree::uint32> computeMaxDistanceAttribute(
 
 MaxDistComputer::MaxDistComputer(const Box &domain,
   const std::vector<uint8> &f)
-  : domain_{domain}, f_{f}
+  : domain_{domain}, f_{f},
+    OFFSET_NEIGHBOUR{ {-1, 0}, {0, -1}, {1, 0}, {0, 1}}
 {}
 
 std::vector<MaxDistComputer::uint32> MaxDistComputer::computeAttribute(
@@ -59,9 +60,6 @@ std::vector<MaxDistComputer::uint32> MaxDistComputer::computeAttribute(
   std::vector<std::unordered_set<uint32>> contours(tree.numberOfNodes());
   std::vector<uint8> ncount(domain_.numberOfPoints());
   
-  // Contour adjacency
-  std::shared_ptr<Adjacency> adj = std::make_shared<InfAdjacency4C>(domain_);
-  
   // process the level sets from 255 down to 0
   for (int level=255; level >= 0; level--) {    
     // skip level that does not contain nodes
@@ -83,11 +81,16 @@ std::vector<MaxDistComputer::uint32> MaxDistComputer::computeAttribute(
       // reuse children contour pixels
       for (NodePtr c : node->children()) {
         for (uint32 pidx : contours[c->id()]) {
-          for (uint32 qidx : adj->neighbours(pidx)) {
+          I32Point p = domain_.indexToPoint(pidx);
+          for (I32Point offset : OFFSET_NEIGHBOUR) {
+            I32Point q = p + offset;
             // qidx is neighbour of pidx which is a contour pixel a child of node
             // thus if f(qidx) == level(node), then qidx must be a cnp of node.
-            if (qidx != Box::UndefinedIndex && node->level() == f_[qidx]) {      
-              ncount[pidx]--;
+            if (domain_.contains(q)) {
+              uint32 qidx = domain_.pointToIndex(q);
+              if (node->level() == f_[qidx]) {
+                ncount[pidx]--;
+              }
             }
           }
 
@@ -111,7 +114,12 @@ std::vector<MaxDistComputer::uint32> MaxDistComputer::computeAttribute(
         // incremetally create level-set binary image
         bin->data[pidx] = 1;
 
-        for (uint32 qidx : adj->neighbours(pidx)) {
+
+        I32Point p = domain_.indexToPoint(pidx);
+        for (I32Point offset : OFFSET_NEIGHBOUR) {
+          I32Point q = p + offset;
+          uint32 qidx = domain_.contains(q) ? domain_.pointToIndex(q) : Box::UndefinedIndex;
+
           if (qidx == Box::UndefinedIndex || f_[pidx] > f_[qidx]) {
             // qidx is background neighbour, thus count it.
             ncount[pidx]++;
@@ -131,7 +139,7 @@ std::vector<MaxDistComputer::uint32> MaxDistComputer::computeAttribute(
           }
           else {  // pidx is pixel of level "level" and it is not a contour pixel
             cost->data[pidx] = INT_MAX;
-            insertNeighborsPQueue(pidx, adj, bin, cost, Q_edt);
+            insertNeighborsPQueue(pidx, bin, cost, Q_edt);
           }
       } // end loop on node cnps
     } // end of loop on nodes of the levels
@@ -215,13 +223,17 @@ void MaxDistComputer::initPredAndRoot(gft::sImage32 *pred, gft::sImage32 *root) 
 
 void MaxDistComputer::insertNeighborsPQueue(
     uint32 pidx, 
-    std::shared_ptr<Adjacency> adj,
     gft::sImage32 *bin,
     gft::sImage32 *cost, 
     gft::sPQueue32 *Q) const
 {
-  for (uint32 qidx : adj->neighbours(pidx)) {
-    if (qidx != Box::UndefinedIndex) { // qidx is in the domain
+  I32Point p = domain_.indexToPoint(pidx);
+
+  for (I32Point offset : OFFSET_NEIGHBOUR) {
+    I32Point q = p + offset;
+
+    if (domain_.contains(q)) { // qidx is in the domain
+      uint32 qidx = domain_.pointToIndex(q);
       if (bin->data[qidx] > 0 
         && cost->data[qidx] != INT_MAX 
         && Q->L.elem[qidx].color != GRAY) {
