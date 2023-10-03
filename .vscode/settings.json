@@ -51,5 +51,13 @@
     "cinttypes": "cpp",
     "typeinfo": "cpp",
     "bit": "cpp"
-  }
+  },
+  "cSpell.words": [
+    "cnps",
+    "morphotree",
+    "pidx"
+  ],
+  "C_Cpp.codeAnalysis.clangTidy.checks.disabled": [
+    "clang-diagnostic-error"
+  ]
 }

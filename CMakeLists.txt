@@ -99,12 +99,37 @@ target_link_libraries(basic_attr_disp
   OpenMP::OpenMP_CXX)  
 
 
-# display maximum distance attribute.
+# runtime computations
 add_executable(diff_max_dist_runtime 
   src/MaxDistComputer.cpp
   src/diff_max_dist_runtime.cpp)
   
 target_link_libraries(diff_max_dist_runtime
+  morphotree
+  gft
+  Threads::Threads
+  ZLIB::ZLIB
+  OpenMP::OpenMP_CXX)
+
+# runtime computations
+add_executable(non_diff_max_dist_runtime 
+  src/NonDiffMaxDistComputer.cpp
+  src/non_diff_max_dist_runtime.cpp)
+  
+target_link_libraries(non_diff_max_dist_runtime
+  morphotree
+  gft
+  Threads::Threads
+  ZLIB::ZLIB
+  OpenMP::OpenMP_CXX)
+
+# Checking
+add_executable(check_implementations 
+  src/NonDiffMaxDistComputer.cpp
+  src/MaxDistComputer.cpp
+  src/check_implementations.cpp)
+  
+target_link_libraries(check_implementations
   morphotree
   gft
   Threads::Threads

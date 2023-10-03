@@ -4,7 +4,7 @@
 #include <morphotree/tree/ct_builder.hpp>
 #include <morphotree/tree/mtree.hpp>
 
-#include <MaxDistComputer.hpp>
+#include <NonDiffMaxDistComputer.hpp>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
@@ -21,7 +21,7 @@ int main(int argc, char *argv[])
   using morphotree::Adjacency8C;
   using morphotree::UI32Point;
   using morphotree::Box;
-  
+
   using morphotree::buildMaxTree;
 
   using std::chrono::high_resolution_clock;
@@ -33,23 +33,23 @@ int main(int argc, char *argv[])
   if (argc > 1) {
     int width, height, nchannels;
     uint8 *data = stbi_load(argv[1], &width, &height, &nchannels, 0);
-    
+
     Box domain = Box::fromSize({static_cast<uint32>(width), static_cast<uint32>(height)});
-    std::vector<uint8> f{ data, data + domain.numberOfPoints() };
+    std::vector<uint8> f( data, data + domain.numberOfPoints() );
 
     std::shared_ptr<Adjacency> adj = std::make_shared<Adjacency8C>(domain);
     MTree tree = buildMaxTree(f, adj);
 
     time_point start = high_resolution_clock::now();
-    std::vector<uint32> maxDist = computeMaxDistanceAttribute(domain, f, tree);
+    std::vector<uint32> maxDist = computeNonDiffMaxDistanceAttribute(domain, f, tree);
     time_point end = high_resolution_clock::now();
 
     milliseconds timeElapsed = duration_cast<milliseconds>(end - start);
     std::cout << "time elapsed: " << timeElapsed.count() << "\n";
   }
   else {
-    std::cerr << "Error, it needs to receive a path for image file.\n";
+    std::cerr << "Error. it needs to receive a path for image file.\n";
   }
 
   return 0;
-} 
+}

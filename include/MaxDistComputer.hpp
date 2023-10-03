@@ -5,8 +5,6 @@
 
 #include <gft.h>
 
-#include <array>
-
 class MaxDistComputer
 {
 public:
@@ -17,7 +15,7 @@ public:
   using Box = morphotree::Box;
   using Adjacency = morphotree::Adjacency;
 
-  MaxDistComputer(Box domain, const std::vector<uint8> &f);
+  MaxDistComputer(const Box& domain, const std::vector<uint8> &f);
 
   std::vector<uint32> computeAttribute(const MTree &tree) const;
 
@@ -34,7 +32,7 @@ private:
     gft::sPQueue32 *Q) const;
 
 private:
-  Box domain_;
+  const Box &domain_;
   const std::vector<uint8> &f_;
 };
 

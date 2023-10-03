@@ -25,7 +25,7 @@ std::vector<morphotree::uint32> computeMaxDistanceAttribute(
 }
 
 
-MaxDistComputer::MaxDistComputer(Box domain,
+MaxDistComputer::MaxDistComputer(const Box &domain,
   const std::vector<uint8> &f)
   : domain_{domain}, f_{f}
 {}
@@ -39,12 +39,12 @@ std::vector<MaxDistComputer::uint32> MaxDistComputer::computeAttribute(
   // define useful images 
   std::vector<uint32> maxDist(tree.numberOfNodes(), 0); 
   std::array<std::vector<NodePtr>, 256> levelToNodes = extractLevelMap(tree);
-  gft::sImage32 *gftImg = createGFTImage();
-  gft::sImage32 *bin = gft::Image32::Create(gftImg);
-  gft::sImage32 *root = gft::Image32::Create(gftImg);
-  gft::sImage32 *pred = gft::Image32::Create(gftImg);
-  gft::sImage32 *cost = gft::Image32::Create(gftImg); // cost = edt^2
-  gft::sImage32 *Bedt = gft::Image32::Create(gftImg);
+  
+  gft::sImage32 *bin = gft::Image32::Create(domain_.width(), domain_.height());
+  gft::sImage32 *root = gft::Image32::Create(domain_.width(), domain_.height());
+  gft::sImage32 *pred = gft::Image32::Create(domain_.width(), domain_.height());
+  gft::sImage32 *cost = gft::Image32::Create(domain_.width(), domain_.height()); // cost = edt^2
+  gft::sImage32 *Bedt = gft::Image32::Create(domain_.width(), domain_.height());
   
   // IFT adjacency 
   gft::sAdjRel* A8 = gft::AdjRel::Neighborhood_8();  
@@ -52,8 +52,8 @@ std::vector<MaxDistComputer::uint32> MaxDistComputer::computeAttribute(
   initPredAndRoot(pred, root);
   
   // define priority queues
-  int nb = SQUARE(MIN(gftImg->ncols, gftImg->nrows) / 2.0 + 1);
-  gft::sPQueue32 *Q_edt = gft::PQueue32::Create(nb, gftImg->n, cost->data);
+  int nb = SQUARE(MIN(bin->ncols, bin->nrows) / 2.0 + 1);
+  gft::sPQueue32 *Q_edt = gft::PQueue32::Create(nb, bin->n, cost->data);
 
   // define variables from incremental contour
   std::vector<std::unordered_set<uint32>> contours(tree.numberOfNodes());
@@ -178,7 +178,6 @@ std::vector<MaxDistComputer::uint32> MaxDistComputer::computeAttribute(
   gft::Image32::Destroy(&pred);
   gft::Image32::Destroy(&root);
   gft::PQueue32::Destroy(&Q_edt);
-  gft::Image32::Destroy(&gftImg);
   gft::Image32::Destroy(&bin);
   gft::AdjRel::Destroy(&A8);
 
