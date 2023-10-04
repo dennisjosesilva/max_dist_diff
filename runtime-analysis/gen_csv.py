@@ -86,7 +86,7 @@ def main(OUTPUT_FILE_NAME = "csv/runtime_0.csv",
     ProgramCalls("peppers.pgm"),
     ProgramCalls("piscine.pgm"),
     ProgramCalls("sat.pgm"),
-    # ProgramCalls("washingtonDC.pgm"),
+    ProgramCalls("washingtonDC.pgm"),
     ProgramCalls("washsat.pgm"),
     ProgramCalls("zelda.pgm")]
   
