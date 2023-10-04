@@ -1,5 +1,5 @@
 
-#define APPDEBUG  1
+// #define APPDEBUG  1
 
 #include "gft.h"
 

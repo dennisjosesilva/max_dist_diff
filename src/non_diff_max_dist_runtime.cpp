@@ -45,7 +45,11 @@ int main(int argc, char *argv[])
     time_point end = high_resolution_clock::now();
 
     milliseconds timeElapsed = duration_cast<milliseconds>(end - start);
-    std::cout << "time elapsed: " << timeElapsed.count() << "\n";
+    std::cout << "nnodes: " << tree.numberOfNodes() << "\n"
+              << "width: "  << domain.width() << "\n"
+              << "height: " << domain.height() << "\n"
+              << "npixels: " << domain.numberOfPoints() << "\n"
+              << "time elapsed: " << timeElapsed.count() << "\n";
   }
   else {
     std::cerr << "Error. it needs to receive a path for image file.\n";

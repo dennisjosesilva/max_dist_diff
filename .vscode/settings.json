@@ -55,12 +55,20 @@
   "cSpell.words": [
     "Bedt",
     "cnps",
+    "goldhill",
     "morphotree",
+    "nchannels",
     "ncols",
     "Ncontour",
     "ncount",
     "neighbours",
-    "pidx"
+    "nnodes",
+    "nondiff",
+    "npixels",
+    "pcall",
+    "pidx",
+    "stbi",
+    "washsat"
   ],
   "C_Cpp.codeAnalysis.clangTidy.checks.disabled": [
     "clang-diagnostic-error"

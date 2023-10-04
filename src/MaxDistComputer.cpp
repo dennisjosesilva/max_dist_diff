@@ -1,5 +1,7 @@
 #include "MaxDistComputer.hpp"
+
 #include <unordered_set>
+#include <unordered_map>
 
 #include <morphotree/adjacency/adjacency.hpp>
 #include <morphotree/adjacency/adjacency4c.hpp>
@@ -57,7 +59,12 @@ std::vector<MaxDistComputer::uint32> MaxDistComputer::computeAttribute(
   gft::sPQueue32 *Q_edt = gft::PQueue32::Create(nb, bin->n, cost->data);
 
   // define variables from incremental contour
-  std::vector<std::unordered_set<uint32>> contours(tree.numberOfNodes());
+  /* 
+    TODO: Try to remove the contour of children nodes when the node the contours are copied to the parent.
+  */
+  // std::vector<std::unordered_set<uint32>> contours(tree.numberOfNodes());
+  std::unordered_map<uint32, std::unordered_set<uint32>> contours;
+
   std::vector<uint8> ncount(domain_.numberOfPoints());
   
   // process the level sets from 255 down to 0
@@ -71,6 +78,7 @@ std::vector<MaxDistComputer::uint32> MaxDistComputer::computeAttribute(
     // So, we have to process them.
     for (NodePtr node : nodes) {
       // process node 
+      contours.insert({node->id(), std::unordered_set<uint32>()});
 
       // removed contour pixels of the node
       std::vector<uint32> toRemove;
@@ -103,6 +111,7 @@ std::vector<MaxDistComputer::uint32> MaxDistComputer::computeAttribute(
             Ncontour.insert(pidx);
           }
         }
+        contours.erase(c->id());
       }
 
       if (!toRemove.empty())
