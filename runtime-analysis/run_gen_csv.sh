@@ -1,4 +1,4 @@
-# https://www.lrde.epita.fr/wiki/Publications/carlinet.14.itippython
+# https://www.lrde.epita.fr/wiki/Publications/carlinet.14.itip
 python gen_csv.py -i ../runtime-dataset/carlinet-14-itip -o csv/runtime_nd_01.csv -e nd
 sleep 10
 python gen_csv.py -i ../runtime-dataset/carlinet-14-itip -o csv/runtime_dn_01.csv -e dn

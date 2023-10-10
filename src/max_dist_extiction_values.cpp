@@ -85,13 +85,13 @@ int main(int argc, char *argv[])
       leaves.push_back(node);
   });
 
-  // Exctiction value
+  // Extinction value
   //std::vector<uint32> maxDist = AreaComputer<uint8>().computeAttribute(maxtree);
   std::vector<uint32> maxDist = computeMaxDistanceAttribute(domain, f, maxtree);
 
   
   #ifdef APPDEBUG
-    //print exctition value 
+    //print extinction value 
     ExtinctionValueMapType extVals = ExtinctionValueComputer().compute(maxtree, maxDist);
     for (auto& leafVal : extVals) {
       std::cout << "maxDist[" << leafVal.first << "] = " << leafVal.second << "\n";

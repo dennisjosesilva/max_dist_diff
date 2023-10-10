@@ -59,12 +59,8 @@ std::vector<MaxDistComputer::uint32> MaxDistComputer::computeAttribute(
   gft::sPQueue32 *Q_edt = gft::PQueue32::Create(nb, bin->n, cost->data);
 
   // define variables from incremental contour
-  /* 
-    TODO: Try to remove the contour of children nodes when the node the contours are copied to the parent.
-  */
   // std::vector<std::unordered_set<uint32>> contours(tree.numberOfNodes());
   std::unordered_map<uint32, std::unordered_set<uint32>> contours;
-
   std::vector<uint8> ncount(domain_.numberOfPoints());
   
   // process the level sets from 255 down to 0

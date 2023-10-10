@@ -53,21 +53,28 @@
     "bit": "cpp"
   },
   "cSpell.words": [
+    "APPDEBUG",
     "Bedt",
     "cnps",
+    "extiction",
     "goldhill",
+    "idirect",
+    "iextinction",
+    "maxtree",
     "morphotree",
     "nchannels",
     "ncols",
     "Ncontour",
     "ncount",
     "neighbours",
+    "nleaves",
     "nnodes",
     "nondiff",
     "npixels",
     "pcall",
     "pidx",
     "stbi",
+    "tranverse",
     "washsat"
   ],
   "C_Cpp.codeAnalysis.clangTidy.checks.disabled": [
