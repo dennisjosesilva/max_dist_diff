@@ -44,17 +44,52 @@ target_link_libraries(dtmt_diff
     ZLIB::ZLIB
     OpenMP::OpenMP_CXX)
 
-# Exemplos com a morphotree
-add_executable(max_dist_extiction_values 
-  src/max_dist_extiction_values.cpp
+# Extinction filters
+add_executable(extinction_filter_max_dist 
+  src/extinction_filter_max_dist.cpp
   src/MaxDistComputer.cpp)
 
-target_link_libraries(max_dist_extiction_values
+target_link_libraries(extinction_filter_max_dist
   morphotree
   gft 
   Threads::Threads
   ZLIB::ZLIB
   OpenMP::OpenMP_CXX)
+
+add_executable(extinction_filter_area 
+  src/extinction_filter_area.cpp
+  src/MaxDistComputer.cpp)
+
+target_link_libraries(extinction_filter_area
+  morphotree
+  gft 
+  Threads::Threads
+  ZLIB::ZLIB
+  OpenMP::OpenMP_CXX)
+
+
+add_executable(extinction_filter_volume 
+  src/extinction_filter_volume.cpp
+  src/MaxDistComputer.cpp)
+
+target_link_libraries(extinction_filter_volume
+  morphotree
+  gft 
+  Threads::Threads
+  ZLIB::ZLIB
+  OpenMP::OpenMP_CXX)
+
+add_executable(extinction_filter_height 
+  src/extinction_filter_height.cpp
+  src/MaxDistComputer.cpp)
+
+target_link_libraries(extinction_filter_height
+  morphotree
+  gft 
+  Threads::Threads
+  ZLIB::ZLIB
+  OpenMP::OpenMP_CXX)
+
 
 # display maximum distance attribute.
 add_executable(max_dist_attr_disp 

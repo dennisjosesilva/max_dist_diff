@@ -6,6 +6,7 @@
 #include <morphotree/adjacency/adjacency8c.hpp>
 #include <morphotree/attributes/extinctionValues/ExtinctionValueLeavesComputer.hpp>
 #include <morphotree/attributes/areaComputer.hpp>
+#include <morphotree/attributes/volumeComputer.hpp>
 #include <morphotree/filtering/extinctionFilter.hpp>
 
 #include <iostream>
@@ -34,6 +35,7 @@ int main(int argc, char *argv[])
   using morphotree::buildMaxTree;
   using morphotree::AreaComputer;
   using morphotree::ExtinctionValueLeavesComputer;
+  using morphotree::VolumeComputer;
   using NodePtr = MorphologicalTree<uint8>::NodePtr;
   using ExtinctionValueComputer = ExtinctionValueLeavesComputer<uint8, uint32>;
   using ExtinctionValueMapType = typename ExtinctionValueComputer::MapType;
@@ -46,7 +48,7 @@ int main(int argc, char *argv[])
   // check number of arguments from the command call
   if (argc < 4) {
     std::cerr << "usage error!\n";
-    std::cerr << "usage: max_dist_extiction_values <image> <out_img> <area> [nleaves] \n";
+    std::cerr << "usage: extinction_filter_volume <image> <out_img> <area> [nleaves] \n";
     return -1;
   }
 
@@ -86,20 +88,18 @@ int main(int argc, char *argv[])
   });
 
   // Extinction value
-  //std::vector<uint32> maxDist = AreaComputer<uint8>().computeAttribute(maxtree);
-  std::vector<uint32> maxDist = computeMaxDistanceAttribute(domain, f, maxtree);
-
+  std::vector<float> volume = VolumeComputer<uint8>().computeAttribute(maxtree);
   
   #ifdef APPDEBUG
     //print extinction value 
-    ExtinctionValueMapType extVals = ExtinctionValueComputer().compute(maxtree, maxDist);
+    ExtinctionValueMapType extVals = ExtinctionValueComputer().compute(maxtree, areaExt);
     for (auto& leafVal : extVals) {
-      std::cout << "maxDist[" << leafVal.first << "] = " << leafVal.second << "\n";
+      std::cout << "areaExt[" << leafVal.first << "] = " << leafVal.second << "\n";
     }
   #endif
 
   // perform extinction filter
-  iextinctionFilter(maxtree, maxDist, nleaves);
+  iextinctionFilter(maxtree, volume, nleaves);
 
   std::cout << "FILTER\n";
   std::cout << "Number of nodes: " << maxtree.numberOfNodes() << std::endl;
