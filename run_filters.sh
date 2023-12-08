@@ -4,6 +4,7 @@ rm ./out/height/*
 rm ./out/max_dist/*
 rm ./out/volume/*
 rm ./out/area/*
+rm ./out/inertia/*
 
 echo "\nPerforming extinction filter for height"
 ./build/extinction_filter_height ./dat/cable.png ./out/height/01.png 0 1
@@ -49,3 +50,14 @@ echo "\nPerforming extinction filter for area"
 ./build/extinction_filter_area ./dat/cable.png ./out/area/07.png 0 7
 ./build/extinction_filter_area ./dat/cable.png ./out/area/08.png 0 8
 ./build/extinction_filter_area ./dat/cable.png ./out/area/09.png 0 9
+
+echo "\nPerforming extinction filter for inertia"
+./build/extinction_filter_area ./dat/cable.png ./out/inertia/01.png 0 1
+./build/extinction_filter_area ./dat/cable.png ./out/inertia/02.png 0 2
+./build/extinction_filter_area ./dat/cable.png ./out/inertia/03.png 0 3
+./build/extinction_filter_area ./dat/cable.png ./out/inertia/04.png 0 4
+./build/extinction_filter_area ./dat/cable.png ./out/inertia/05.png 0 5
+./build/extinction_filter_area ./dat/cable.png ./out/inertia/06.png 0 6
+./build/extinction_filter_area ./dat/cable.png ./out/inertia/07.png 0 7
+./build/extinction_filter_area ./dat/cable.png ./out/inertia/08.png 0 8
+./build/extinction_filter_area ./dat/cable.png ./out/inertia/09.png 0 9

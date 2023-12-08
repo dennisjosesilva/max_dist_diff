@@ -90,6 +90,16 @@ target_link_libraries(extinction_filter_height
   ZLIB::ZLIB
   OpenMP::OpenMP_CXX)
 
+add_executable(extinction_filter_inertia 
+  src/extinction_filter_inertia.cpp
+  src/InertiaComputer.cpp)
+
+target_link_libraries(extinction_filter_inertia
+  morphotree
+  gft
+  Threads::Threads
+  ZLIB::ZLIB
+  OpenMP::OpenMP_CXX)
 
 # display maximum distance attribute.
 add_executable(max_dist_attr_disp 
